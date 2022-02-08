@@ -8,3 +8,6 @@
 - (may need to install more. try to install it using conda install first then pip install)
 ## How to run a simulation
 - python app.py
+## other necessary files
+- /input: this folder contains input csv and other files
+- ../EDEN-ABM-Simulator/output/XXXX-XX-XX/runX: output data
