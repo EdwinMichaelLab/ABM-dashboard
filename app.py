@@ -33,6 +33,11 @@ from sklearn.metrics import mean_absolute_percentage_error
 
 #import vaex
 
+ZIPS = ['33510', '33511', '33527', '33534', '33547', '33548', '33549', '33556', '33558', '33559', '33563', '33565',
+            '33566', '33567', '33569', '33570', '33572', '33573', '33578', '33579', '33584', '33592', '33594', '33596',
+            '33598', '33602', '33603', '33604', '33605', '33606', '33607', '33609', '33610', '33611', '33612', '33613',
+            '33614', '33615', '33616', '33617', '33618', '33619', '33624', '33625', '33626', '33629', '33634', '33635',
+            '33637', '33647']
 
 MAX_ROWS=10000000
 path = os.path.join('..', 'EDEN-ABM-Simulator', 'SimulationEngine', 'output', '2021-12-29', 'run4')
@@ -983,7 +988,7 @@ def load_scatter(zipcode="33647"):
     pdf = pdf.sample(frac=SAMPLING_PERCENT_1) # (???) similar to geting every 4th rows
     print('scatter data size(after '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
 
-    print('scatter memory usage', pdf.info())
+    #print('scatter memory usage', pdf.info())
     print('scatter memory size(MB)', sys.getsizeof(pdf)/(1024*1024))
     pdf = pdf.sort_values(by='step') # should be run after sampling
 
@@ -1065,30 +1070,6 @@ def load_scatter(zipcode="33647"):
         borderwidth=2
         )
     )
-
-    fig.update_layout(
-        updatemenus=[
-            dict(
-                active=0,
-                buttons=list([
-                    dict(label="33647",
-                        method="update",
-                        args=[{"title": "33647"}]),
-                    dict(label="33637",
-                        method="update",
-                        args=[{"title": "33637"}]),
-
-                ]),
-                direction="down",
-                pad={"r": 10, "t": 10},
-                showactive=True,
-                x=0.1,
-                xanchor="left",
-                y=1.1,
-                yanchor="top"
-            )
-        ]
-    )    
     return fig
 
 
@@ -1125,7 +1106,7 @@ def load_heatmap():
     print('heatmap data size(before '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
     pdf = pdf.sample(frac=SAMPLING_PERCENT_2)
     print('heatmap data size(after '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
-    print('heatmap memory size', pdf.info())
+    #print('heatmap memory size', pdf.info())
     print('heatmap memory usage(MB)', sys.getsizeof(pdf)/(1024*1024))
     pdf = pdf.sort_values(by='step')
     fig = px.density_mapbox(pdf,
@@ -1283,7 +1264,16 @@ app.layout = html.Div(children=[
                         #labelStyle = {'display': 'inline-block', 'margin-right': 10},
                         style={'padding': 10, 'flex': 1}
                     ),
+                    html.H4("Select zipcode:", className="control_label", style={'padding': 10, 'flex': 1}),
+                    dcc.RadioItems(
+                        id="zipcode",
+                        options=[{'disabled':False, 'label': z, 'value': z} for z in ZIPS],
 
+                        value="33647",
+                        labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
+                        #labelStyle = {'display': 'inline-block', 'margin-right': 10},
+                        style={'padding': 10, 'flex': 1}
+                    ),
                     html.Br(),
                     html.Br(),
                     html.A("Contact Info.", href='https://health.usf.edu/publichealth/overviewcoph/faculty/edwin-michael', target="_blank"),
@@ -1395,6 +1385,16 @@ def render_content(tab):
 def update_SEIR(filter_type):
     figure1 = load_SEIR(filter_type)
     return figure1
+
+@app.callback(
+    Output("graph2", 'figure'),
+    [
+        Input("zipcode", "value"),
+    ],
+)
+def update_scatter_by_zipcode(zipcode):
+    figure2 = load_scatter(zipcode)
+    return figure2
 
 if __name__ == '__main__':
     app.run_server(debug=False,host="0.0.0.0",port=8050)
