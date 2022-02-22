@@ -59,12 +59,12 @@ SF2 = 5
 # scatter
 #SKIP_EVERY_NTH_1=100 # best at 2
 #SKIP_EVERY_NTH_1=100 # best at 2
-SAMPLING_PERCENT_1=0.4 # default 0.25
+SAMPLING_PERCENT_1=0.5 # default 0.25
 
 # heatmap
 #SKIP_EVERY_NTH_2=10 # best at 2
 #SKIP_EVERY_NTH_2=1 # best at 2
-SAMPLING_PERCENT_2=0.5 # default 0.5
+SAMPLING_PERCENT_2=0.8 # default 0.5
 
 def plot(min, mean, max):
     sub_groups = ['Cases', 'Admissions', 'Deaths']
@@ -1450,8 +1450,8 @@ def render_content(tab):
             html.Br(),
             html.H2("Spatial plot of individual daily case emergence and spread"),
             html.P(scatter_map_explain),
-            html.P("(Steps equals Days starting March 1, 2020.)"),
-            html.P("(Note: For the fast web response, only a fraction of data is being used here. For best result, please contact us.)", style={'textAlign': 'center', 'color':'orange'}),
+            #html.P("(Steps equals Days starting March 1, 2020.)"),
+            html.P("Note: For the fast web response, only a fraction of data is being used here. For best result, please contact us. This page uses "+str(SAMPLING_PERCENT_1*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
             dcc.Dropdown(
                 id="zipcode",
                 options=ZIPS,
@@ -1467,10 +1467,9 @@ def render_content(tab):
             html.Br(),
             html.H2("Heatmap of the density of daily infectious cases"),
             #html.P("(Z values represents the number of cases within the same zipcode area.)"),
-            html.P("(Steps equals Days starting March 1, 2020)"),
+            #html.P("(Steps equals Days starting March 1, 2020)"),
             html.P(heat_map_explain),
-            html.P("(Note: For the fast web response, only a fraction of data is being used here. For best result, please contact us.)", style={'textAlign': 'center', 'color':'orange'}),
-            html.H4("Zip Code:", className="control_label", style={'padding': 10, 'flex': 1}),
+            html.P("Note: For the fast web response, only a fraction of data is being used here. For best result, please contact us. This page uses "+str(SAMPLING_PERCENT_2*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
             dcc.Graph(
                 id='graph3',
                 figure=figure3

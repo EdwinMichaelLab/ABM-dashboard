@@ -43,7 +43,8 @@ body {
     visibility: hidden;
 }
 *[data-dash-is-loading="true"]::before{
-    content: "\a\aLoading...";
+    content: "\a \a Loading...";
+    white-space: pre-line;
     display: inline-block;
     color: magenta;
     visibility: visible;
