@@ -59,12 +59,48 @@ SF2 = 5
 # scatter
 #SKIP_EVERY_NTH_1=100 # best at 2
 #SKIP_EVERY_NTH_1=100 # best at 2
-SAMPLING_PERCENT_1=0.4 # default 0.25
+SAMPLING_PERCENT_1=0.2 # default 0.25
 
 # heatmap
 #SKIP_EVERY_NTH_2=10 # best at 2
 #SKIP_EVERY_NTH_2=1 # best at 2
-SAMPLING_PERCENT_2=0.6 # default 0.5
+SAMPLING_PERCENT_2=0.25 # default 0.5
+
+startdate = date(2020, 3, 1)
+enddate = date(2021, 8, 31)
+def load_scatter(zipcode):
+    return load_scatter_mongodb(zipcode)
+    #return load_scatter_read_parquet(zipcode)
+
+def load_heatmap(zipcode):
+    return load_heatmap_mongodb(zipcode)
+    #return load_heatmap_read_parquet(zipcode)
+'''
+legend_map={
+    "susceptible":"blue",
+    "asymptomatic":"purple",
+    "vaccinated":"olive",
+    "boosted":"olive",
+    "recovered":"green",
+    "critical": "red",
+    "dead": "black",
+    "exposed": "orange",
+    "mild": "red",
+    "presymptomatic": "red",
+    "severe":"red"}
+'''
+legend_map={
+    "susceptible":"blue",
+    "asymptomatic":"purple",
+    "vaccinated":"olive",
+    "boosted":"olive",
+    "recovered":"green",
+    "critical": "#F1948A",
+    "dead": "black",
+    "exposed": "orange",
+    "mild": "#F5B7B1",
+    "presymptomatic": "#F2D7D5",
+    "severe":"#EC7063"}
 
 def plot(min, mean, max):
     sub_groups = ['Cases', 'Admissions', 'Deaths']
@@ -933,67 +969,38 @@ def load_SEIR(mode):
         elif mode == 'By FPL':
             return plot_FPL(plotdf)
 
-startdate = date(2020, 3, 1)
-enddate = date(2021, 8, 31)
-
-'''
-legend_map={
-    "susceptible":"blue",
-    "asymptomatic":"purple",
-    "vaccinated":"olive",
-    "boosted":"olive",
-    "recovered":"green",
-    "critical": "red",
-    "dead": "black",
-    "exposed": "orange",
-    "mild": "red",
-    "presymptomatic": "red",
-    "severe":"red"}
-'''
-legend_map={
-    "susceptible":"blue",
-    "asymptomatic":"purple",
-    "vaccinated":"olive",
-    "boosted":"olive",
-    "recovered":"green",
-    "critical": "#F1948A",
-    "dead": "black",
-    "exposed": "orange",
-    "mild": "#F5B7B1",
-    "presymptomatic": "#F2D7D5",
-    "severe":"#EC7063"}
-columns_being_used_in_scatter=[
-    'step',
-    #'pid',
-    'x',
-    'y',
-    #'location',
-    #'ZIP',
-    #'type',
-    'state',
-    #'color',
-]
-
 """
-load_scatter using read_parquet (modified from read_csv)
+load_scatter using_read_parquet
 """
-def load_scatter_parquet(zipcode="33510"):
-    #tp = vaex.from_csv(os.path.join(path, 'scatter.csv'), copy_index=False)
+def load_scatter_read_parquet(zipcode=default_zipcode):
     if zipcode is None:
-        zipcode="33510"
+        zipcode=default_zipcode
     print("zipcode:", zipcode)
-
+    columns_being_used_in_scatter=[
+        'step',
+        #'pid',
+        'x',
+        'y',
+        #'location',
+        #'ZIP',
+        #'type',
+        'state',
+        #'color',
+    ]
+    #tp = vaex.from_csv(os.path.join(path, 'scatter.csv'), copy_index=False)
+ 
     #tp = pd.read_csv(os.path.join(path, 'scatter.csv'), iterator=True, chunksize=CHUNK_SIZE1, skiprows=lambda x: x % SKIP_EVERY_NTH_1)
     #pdf = pd.concat(tp, ignore_index=True)
 
     #pdf = dd.read_csv(os.path.join(path, 'scatter.csv'))
 
     #pdf=pdf.drop(['pid', 'location', 'ZIP', 'type'], axis=1)
-
+    t1=datetime.now()
     pdf = pd.read_parquet(os.path.join(path, 'scatter.parquet'),
                     filters=[('ZIP','in', [zipcode])],
                     columns=columns_being_used_in_scatter,
     )
+    print("scatter read_parquet time spent", datetime.now()-t1)
     pdf["state"] =  pdf["state"].astype("category")
     #pdf["step"] =  pdf["step"].astype("category")
     pdf["step"] = pd.to_numeric(pdf["step"], downcast="unsigned")
@@ -1078,12 +1085,12 @@ client = MongoClient()
 print(client)
 db = client["abm"]
 """
-load_scatter via Mongodb
+load_scatter via_mongodb
 """
-def load_scatter(zipcode="33510"):
+def load_scatter_mongodb(zipcode=default_zipcode):
     #tp = vaex.from_csv(os.path.join(path, 'scatter.csv'), copy_index=False)
     if zipcode is None:
-        zipcode="33510"
+        zipcode=default_zipcode
     print("zipcode:", zipcode)
 
     #tp = pd.read_csv(os.path.join(path, 'scatter.csv'), iterator=True, chunksize=CHUNK_SIZE1, skiprows=lambda x: x % SKIP_EVERY_NTH_1)
@@ -1092,12 +1099,7 @@ def load_scatter(zipcode="33510"):
     #pdf = dd.read_csv(os.path.join(path, 'scatter.csv'))
 
     #pdf=pdf.drop(['pid', 'location', 'ZIP', 'type'], axis=1)
-    '''
-    pdf = pd.read_parquet(os.path.join(path, 'scatter.parquet'),
-                    filters=[('ZIP','in', [zipcode])],
-                    columns=columns_being_used_in_scatter,
-    )
-    '''
+
     t1=datetime.now()
     list_scatter=list(db.scatter.find({"ZIP":int(zipcode)}))
     print("mongodb search result for ", zipcode, len(list_scatter),"time spent", datetime.now()-t1)
@@ -1176,9 +1178,9 @@ def load_scatter(zipcode="33510"):
     )
     return fig
 """
-load_heatmap using read_parquet
+load_heatmap using_read_parquet
 """
-def load_heatmap():
+def load_heatmap_read_parquet(zipcode=default_zipcode):
     columns_being_used_in_heatmap=[
         'step',
         'x',
@@ -1190,11 +1192,13 @@ def load_heatmap():
     #pdf = pd.concat(tp, ignore_index=True)
     #pdf = dd.read_csv(os.path.join(path, 'heatmap.csv'))
     #pdf = pdf.drop(['zip'], axis=1)
+    t1=datetime.now()
     pdf = pd.read_parquet(os.path.join(path, 'heatmap.parquet'),
-                    filters=[('zip','in', ['33510'])],
+                    filters=[('zip','in', [zipcode])],
                     columns=columns_being_used_in_heatmap,
     )
-    pdf["step"] =  pdf["step"].astype("category")
+    print("heatmap read_parquet time spent", datetime.now()-t1)
+    #pdf["step"] =  pdf["step"].astype("category")
     pdf["step"] = pd.to_numeric(pdf["step"], downcast="unsigned")
     pdf[['x','y']] = pdf[['x','y']].apply(pd.to_numeric, downcast="float")
     pdf["z"] = pd.to_numeric(pdf["z"], downcast="unsigned")
@@ -1215,6 +1219,7 @@ def load_heatmap():
     print('heatmap memory usage(MB)', sys.getsizeof(pdf)/(1024*1024))
     pdf = pdf.sort_values(by='step')
     pdf.drop('step',1, inplace=True)
+
     fig = px.density_mapbox(pdf,
                             color_continuous_scale='RdYlGn_r',
                             lat=pdf['y'],
@@ -1230,15 +1235,73 @@ def load_heatmap():
                             # mapbox_style='open-street-map'
                             mapbox_style='stamen-terrain')
     return fig
-    
+
+"""
+load_heatmap using_mongodb
+"""
+def load_heatmap_mongodb(zipcode=default_zipcode):
+    if zipcode is None:
+        zipcode=default_zipcode
+    print(zipcode)
+    columns_being_used_in_heatmap=[
+        'step',
+        'x',
+        'y',
+        'z',
+        #'zip',
+    ]
+    #tp = pd.read_csv(os.path.join(path, 'heatmap.csv'), iterator=True, chunksize=CHUNK_SIZE2, skiprows=lambda x: x % SKIP_EVERY_NTH_2)
+    #pdf = pd.concat(tp, ignore_index=True)
+    #pdf = dd.read_csv(os.path.join(path, 'heatmap.csv'))
+    #pdf = pdf.drop(['zip'], axis=1)
+
+    # pdf = pd.read_parquet(os.path.join(path, 'heatmap.parquet'),
+    #                 filters=[('zip','in', [zipcode])],
+    #                 columns=columns_being_used_in_heatmap,
+    # )
+    t1=datetime.now()
+    list_heatmap=list(db.heatmap.find({"zip":int(zipcode)}))
+    print("heatmap mongodbsearch result", len(list_heatmap),"time spent", datetime.now()-t1)
+    pdf = pd.DataFrame(list_heatmap)
+
+    # pdf["step"] =  pdf["step"].astype("category")
+    pdf["step"] = pd.to_numeric(pdf["step"], downcast="unsigned")
+    pdf[['x','y']] = pdf[['x','y']].apply(pd.to_numeric, downcast="float")
+    pdf["z"] = pd.to_numeric(pdf["z"], downcast="unsigned")
+
+    #datelist = pd.date_range(startdate, enddate).tolist()
+    pdf['date']=[startdate+timedelta(days=d) for d in pdf['step']]
+    pdf['date']=pdf['date'].astype(str)
+
+    print('heatmap data size(before '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
+    pdf = pdf.sample(frac=SAMPLING_PERCENT_2)
+    print('heatmap data size(after '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
+    #print('heatmap memory size', pdf.info())
+    print('heatmap memory usage(MB)', sys.getsizeof(pdf)/(1024*1024))
+    pdf = pdf.sort_values(by='step')
+    pdf.drop('step',1, inplace=True)
+
+    fig = px.density_mapbox(pdf,
+                            color_continuous_scale='RdYlGn_r',
+                            lat=pdf['y'],
+                            lon=pdf['x'],
+                            z=pdf['z'],
+                            #animation_frame=pdf['step'],
+                            animation_frame='date',
+                            zoom=9,
+                            opacity=0.75,
+                            height=800,
+                            width=1000,
+                            center=dict(lat=28.03711, lon=-82.46390),
+                            # mapbox_style='open-street-map'
+                            mapbox_style='stamen-terrain')
+    return fig
+
 figure1 = load_SEIR('All cases-Not filtered')
-
 print("Reading heatmap data...")
-figure3 = load_heatmap()
-
+figure3 = load_heatmap(default_zipcode)
 print("Reading scatter data...")
 figure2 = load_scatter(default_zipcode)
-
 print('SEIR/Scatter/Heatmap loading completed!')
 
 colors = {
@@ -1456,7 +1519,7 @@ def render_content(tab):
             dcc.Dropdown(
                 id="zipcode",
                 options=ZIPS,
-                value='33510',
+                value=default_zipcode,
                 style=dict(width='40%',
                     display='inline-block',
                     verticalAlign="middle"
@@ -1477,6 +1540,17 @@ def render_content(tab):
             #html.P("(Steps equals Days starting March 1, 2020)"),
             html.P(heat_map_explain),
             html.P("Note: For the fast web response, only a fraction of data is being used here. For best result, please contact us. This page uses "+str(SAMPLING_PERCENT_2*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
+            dcc.Dropdown(
+                id="zipcode_heatmap",
+                options=ZIPS,
+                value=default_zipcode,
+                style=dict(width='40%',
+                    display='inline-block',
+                    verticalAlign="middle"
+                ),
+                #style={'margin-right': 10, 'padding': 1, 'flex': 1}
+                #style={"width": "200px", 'display':'flex', 'align-items':'center','justify-content':'center'},
+            ),            
             dcc.Graph(
                 id='graph3',
                 figure=figure3
@@ -1495,7 +1569,13 @@ def update_scatter_by_zipcode(zipcode):
     time.sleep(1)
     figure2 = load_scatter(zipcode)
     return figure2
-  
+
+#@app.callback(Output("graph2", 'figure'), Input("zipcode", "value"))
+@app.callback(Output("graph3", 'figure'), Input("zipcode_heatmap", "value"))
+def update_heatmap_by_zipcode(zipcode_heatmap):
+    time.sleep(1)
+    figure3 = load_heatmap(zipcode_heatmap)
+    return figure3
 if __name__ == '__main__':
     app.run_server(debug=False,host="0.0.0.0",port=8050)
 
