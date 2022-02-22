@@ -59,12 +59,12 @@ SF2 = 5
 # scatter
 #SKIP_EVERY_NTH_1=100 # best at 2
 #SKIP_EVERY_NTH_1=100 # best at 2
-SAMPLING_PERCENT_1=0.5 # default 0.25
+SAMPLING_PERCENT_1=0.4 # default 0.25
 
 # heatmap
 #SKIP_EVERY_NTH_2=10 # best at 2
 #SKIP_EVERY_NTH_2=1 # best at 2
-SAMPLING_PERCENT_2=0.8 # default 0.5
+SAMPLING_PERCENT_2=0.6 # default 0.5
 
 def plot(min, mean, max):
     sub_groups = ['Cases', 'Admissions', 'Deaths']
@@ -999,7 +999,7 @@ def load_scatter_parquet(zipcode="33510"):
     pdf["step"] = pd.to_numeric(pdf["step"], downcast="unsigned")
     pdf[['x','y']] = pdf[['x','y']].apply(pd.to_numeric, downcast="float")
 
-    datelist = pd.date_range(startdate, enddate).tolist()
+    #datelist = pd.date_range(startdate, enddate).tolist()
     pdf['date']=[startdate+timedelta(days=d) for d in pdf['step']]
     pdf['date']=pdf['date'].astype(str)
     
@@ -1016,7 +1016,7 @@ def load_scatter_parquet(zipcode="33510"):
     #print('scatter memory usage', pdf.info())
     print('scatter memory size(MB)', sys.getsizeof(pdf)/(1024*1024))
     pdf = pdf.sort_values(by='step') # should be run after sampling
-
+    pdf.drop('step',1, inplace=True)
 
     fig = px.scatter_mapbox(pdf,
                             #title="Scatter_Map",
@@ -1108,7 +1108,7 @@ def load_scatter(zipcode="33510"):
     pdf["step"] = pd.to_numeric(pdf["step"], downcast="unsigned")
     pdf[['x','y']] = pdf[['x','y']].apply(pd.to_numeric, downcast="float")
 
-    datelist = pd.date_range(startdate, enddate).tolist()
+    #datelist = pd.date_range(startdate, enddate).tolist()
     pdf['date']=[startdate+timedelta(days=d) for d in pdf['step']]
     pdf['date']=pdf['date'].astype(str)
     
@@ -1120,7 +1120,7 @@ def load_scatter(zipcode="33510"):
     #print('scatter memory usage', pdf.info())
     print('scatter memory size(MB)', sys.getsizeof(pdf)/(1024*1024))
     pdf = pdf.sort_values(by='step') # should be run after sampling
-
+    pdf.drop('step',1, inplace=True)
 
     fig = px.scatter_mapbox(pdf,
                             #title="Scatter_Map",
@@ -1199,7 +1199,7 @@ def load_heatmap():
     pdf[['x','y']] = pdf[['x','y']].apply(pd.to_numeric, downcast="float")
     pdf["z"] = pd.to_numeric(pdf["z"], downcast="unsigned")
 
-    datelist = pd.date_range(startdate, enddate).tolist()
+    #datelist = pd.date_range(startdate, enddate).tolist()
     pdf['date']=[startdate+timedelta(days=d) for d in pdf['step']]
     pdf['date']=pdf['date'].astype(str)
 
@@ -1214,6 +1214,7 @@ def load_heatmap():
     #print('heatmap memory size', pdf.info())
     print('heatmap memory usage(MB)', sys.getsizeof(pdf)/(1024*1024))
     pdf = pdf.sort_values(by='step')
+    pdf.drop('step',1, inplace=True)
     fig = px.density_mapbox(pdf,
                             color_continuous_scale='RdYlGn_r',
                             lat=pdf['y'],
@@ -1231,10 +1232,10 @@ def load_heatmap():
     return fig
     
 figure1 = load_SEIR('All cases-Not filtered')
-#figure3 = None
+
 print("Reading heatmap data...")
 figure3 = load_heatmap()
-#figure2 = None 
+
 print("Reading scatter data...")
 figure2 = load_scatter(default_zipcode)
 
@@ -1455,7 +1456,13 @@ def render_content(tab):
             dcc.Dropdown(
                 id="zipcode",
                 options=ZIPS,
-                value='33510'
+                value='33510',
+                style=dict(width='40%',
+                    display='inline-block',
+                    verticalAlign="middle"
+                ),
+                #style={'margin-right': 10, 'padding': 1, 'flex': 1}
+                #style={"width": "200px", 'display':'flex', 'align-items':'center','justify-content':'center'},
             ),            
             dcc.Graph(
                 id='graph2',
@@ -1482,8 +1489,10 @@ def update_SEIR(filter_type):
     figure1 = load_SEIR(filter_type)
     return figure1
 
+#@app.callback(Output("graph2", 'figure'), Input("zipcode", "value"))
 @app.callback(Output("graph2", 'figure'), Input("zipcode", "value"))
 def update_scatter_by_zipcode(zipcode):
+    time.sleep(1)
     figure2 = load_scatter(zipcode)
     return figure2
   
