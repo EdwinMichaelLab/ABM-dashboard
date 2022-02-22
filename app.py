@@ -30,15 +30,18 @@ import threading
 import time
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_percentage_error
-
 #import vaex
+import pymongo
+from pymongo import MongoClient
+client = MongoClient()
+print(client)
+db = client["abm"]
 
 ZIPS = ['33510', '33511', '33527', '33534', '33547', '33548', '33549', '33556', '33558', '33559', '33563', '33565',
             '33566', '33567', '33569', '33570', '33572', '33573', '33578', '33579', '33584', '33592', '33594', '33596',
             '33598', '33602', '33603', '33604', '33605', '33606', '33607', '33609', '33610', '33611', '33612', '33613',
             '33614', '33615', '33616', '33617', '33618', '33619', '33624', '33625', '33626', '33629', '33634', '33635',
             '33637', '33647']
-default_zipcode ="33510"
 
 MAX_ROWS=10000000
 path = os.path.join('..', 'EDEN-ABM-Simulator', 'SimulationEngine', 'output', '2021-12-29', 'run4')
@@ -68,13 +71,17 @@ SAMPLING_PERCENT_2=0.25 # default 0.5
 
 startdate = date(2020, 3, 1)
 enddate = date(2021, 8, 31)
-def load_scatter(zipcode):
-    return load_scatter_mongodb(zipcode)
-    #return load_scatter_read_parquet(zipcode)
 
-def load_heatmap(zipcode):
-    return load_heatmap_mongodb(zipcode)
-    #return load_heatmap_read_parquet(zipcode)
+default_zipcode ="33510"
+default_year ="2021"
+
+def load_scatter(zipcode, year):
+    #return load_scatter_mongodb(zipcode, year)
+    return load_scatter_read_parquet(zipcode, year)
+
+def load_heatmap(zipcode,year):
+    #return load_heatmap_mongodb(zipcode, year)
+    return load_heatmap_read_parquet(zipcode,year)
 '''
 legend_map={
     "susceptible":"blue",
@@ -972,10 +979,23 @@ def load_SEIR(mode):
 """
 load_scatter using_read_parquet
 """
-def load_scatter_read_parquet(zipcode=default_zipcode):
+def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year):
+    total_steps = enddate - startdate
+    step_until_lastday_of_2020=date(2020, 12, 31)-startdate
+    min_step=1
+    max_step=total_steps.days
+    if year=="2020":
+        min_step=1
+        max_step=step_until_lastday_of_2020.days
+    elif year=="2021":
+        min_step=step_until_lastday_of_2020.days + 1
+        max_step=total_steps.days
+ 
     if zipcode is None:
         zipcode=default_zipcode
     print("zipcode:", zipcode)
+    print(year, min_step, max_step)
+
     columns_being_used_in_scatter=[
         'step',
         #'pid',
@@ -996,8 +1016,8 @@ def load_scatter_read_parquet(zipcode=default_zipcode):
 
     #pdf=pdf.drop(['pid', 'location', 'ZIP', 'type'], axis=1)
     t1=datetime.now()
-    pdf = pd.read_parquet(os.path.join(path, 'scatter.parquet'),
-                    filters=[('ZIP','in', [zipcode])],
+    pdf = pd.read_parquet(os.path.join(path, 'scatter.parquet.gzip'),
+                    filters=[('ZIP','in', [zipcode]), ('step','>=', min_step), ('step', '<=', max_step)],
                     columns=columns_being_used_in_scatter,
     )
     print("scatter read_parquet time spent", datetime.now()-t1)
@@ -1079,19 +1099,27 @@ def load_scatter_read_parquet(zipcode=default_zipcode):
     )
     return fig
 
-import pymongo
-from pymongo import MongoClient
-client = MongoClient()
-print(client)
-db = client["abm"]
 """
 load_scatter via_mongodb
 """
-def load_scatter_mongodb(zipcode=default_zipcode):
-    #tp = vaex.from_csv(os.path.join(path, 'scatter.csv'), copy_index=False)
+def load_scatter_mongodb(zipcode=default_zipcode, year=default_year):
+    total_steps = enddate - startdate
+    step_until_lastday_of_2020=date(2020, 12, 31)-startdate
+    min_step=1
+    max_step=total_steps.days
+    if year=="2020":
+        min_step=1
+        max_step=step_until_lastday_of_2020.days
+    elif year=="2021":
+        min_step=step_until_lastday_of_2020.days + 1
+        max_step=total_steps.days
+ 
     if zipcode is None:
         zipcode=default_zipcode
     print("zipcode:", zipcode)
+    print(year, min_step, max_step)
+
+    #tp = vaex.from_csv(os.path.join(path, 'scatter.csv'), copy_index=False)
 
     #tp = pd.read_csv(os.path.join(path, 'scatter.csv'), iterator=True, chunksize=CHUNK_SIZE1, skiprows=lambda x: x % SKIP_EVERY_NTH_1)
     #pdf = pd.concat(tp, ignore_index=True)
@@ -1101,7 +1129,12 @@ def load_scatter_mongodb(zipcode=default_zipcode):
     #pdf=pdf.drop(['pid', 'location', 'ZIP', 'type'], axis=1)
 
     t1=datetime.now()
-    list_scatter=list(db.scatter.find({"ZIP":int(zipcode)}))
+    list_scatter=list(db.scatter.find({'$and':[
+                                    {"ZIP":int(zipcode)}, 
+                                    {'step':{'$gt':min_step}},
+                                    {'step':{'$lt':max_step}}
+    ]}
+    ))
     print("mongodb search result for ", zipcode, len(list_scatter),"time spent", datetime.now()-t1)
     pdf = pd.DataFrame(list_scatter)
 
@@ -1180,7 +1213,23 @@ def load_scatter_mongodb(zipcode=default_zipcode):
 """
 load_heatmap using_read_parquet
 """
-def load_heatmap_read_parquet(zipcode=default_zipcode):
+def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year):
+    total_steps = enddate - startdate
+    step_until_lastday_of_2020=date(2020, 12, 31)-startdate
+    min_step=1
+    max_step=total_steps.days
+    if year=="2020":
+        min_step=1
+        max_step=step_until_lastday_of_2020.days
+    elif year=="2021":
+        min_step=step_until_lastday_of_2020.days + 1
+        max_step=total_steps.days
+ 
+    if zipcode is None:
+        zipcode=default_zipcode
+    print("zipcode:", zipcode)
+    print(year, min_step, max_step)
+    
     columns_being_used_in_heatmap=[
         'step',
         'x',
@@ -1193,8 +1242,8 @@ def load_heatmap_read_parquet(zipcode=default_zipcode):
     #pdf = dd.read_csv(os.path.join(path, 'heatmap.csv'))
     #pdf = pdf.drop(['zip'], axis=1)
     t1=datetime.now()
-    pdf = pd.read_parquet(os.path.join(path, 'heatmap.parquet'),
-                    filters=[('zip','in', [zipcode])],
+    pdf = pd.read_parquet(os.path.join(path, 'heatmap.parquet.gzip'),
+                    filters=[('zip','in', [zipcode]), ('step','>=', min_step), ('step', '<=', max_step)],
                     columns=columns_being_used_in_heatmap,
     )
     print("heatmap read_parquet time spent", datetime.now()-t1)
@@ -1239,28 +1288,31 @@ def load_heatmap_read_parquet(zipcode=default_zipcode):
 """
 load_heatmap using_mongodb
 """
-def load_heatmap_mongodb(zipcode=default_zipcode):
+def load_heatmap_mongodb(zipcode=default_zipcode, year=default_year):
+    total_steps = enddate - startdate
+    step_until_lastday_of_2020=date(2020, 12, 31)-startdate
+    min_step=1
+    max_step=total_steps.days
+    if year=="2020":
+        min_step=1
+        max_step=step_until_lastday_of_2020.days
+    elif year=="2021":
+        min_step=step_until_lastday_of_2020.days + 1
+        max_step=total_steps.days
+ 
     if zipcode is None:
         zipcode=default_zipcode
-    print(zipcode)
-    columns_being_used_in_heatmap=[
-        'step',
-        'x',
-        'y',
-        'z',
-        #'zip',
-    ]
-    #tp = pd.read_csv(os.path.join(path, 'heatmap.csv'), iterator=True, chunksize=CHUNK_SIZE2, skiprows=lambda x: x % SKIP_EVERY_NTH_2)
-    #pdf = pd.concat(tp, ignore_index=True)
-    #pdf = dd.read_csv(os.path.join(path, 'heatmap.csv'))
-    #pdf = pdf.drop(['zip'], axis=1)
+    print("zipcode:", zipcode)
+    print(year, min_step, max_step)
 
-    # pdf = pd.read_parquet(os.path.join(path, 'heatmap.parquet'),
-    #                 filters=[('zip','in', [zipcode])],
-    #                 columns=columns_being_used_in_heatmap,
-    # )
     t1=datetime.now()
-    list_heatmap=list(db.heatmap.find({"zip":int(zipcode)}))
+    #list_heatmap=list(db.heatmap.find({"zip":int(zipcode)}))
+    list_heatmap=list(db.heatmap.find({'$and':[
+                                    {"zip":int(zipcode)}, 
+                                    {'step':{'$gt':min_step}},
+                                    {'step':{'$lt':max_step}}
+    ]}
+    ))
     print("heatmap mongodbsearch result", len(list_heatmap),"time spent", datetime.now()-t1)
     pdf = pd.DataFrame(list_heatmap)
 
@@ -1299,9 +1351,9 @@ def load_heatmap_mongodb(zipcode=default_zipcode):
 
 figure1 = load_SEIR('All cases-Not filtered')
 print("Reading heatmap data...")
-figure3 = load_heatmap(default_zipcode)
+figure3 = load_heatmap(default_zipcode, default_year)
 print("Reading scatter data...")
-figure2 = load_scatter(default_zipcode)
+figure2 = load_scatter(default_zipcode, default_year)
 print('SEIR/Scatter/Heatmap loading completed!')
 
 colors = {
@@ -1446,7 +1498,7 @@ app.layout = html.Div(children=[
                                 children=[
                                     html.P('Paper: "An Agent-based City Scale Digital Twin (EDEN) for Pandemic Analytics and Scenario Planning, Imran Mahmood et al. (in publishing)"'),
                                     html.H3(children='* Simulation results are provided by Dr. Edwin Michael Lab, USF College of Public Health *'),
-                                    html.H4('Team members: Edwin Michael (PI), Imran Mahmood Qureshi Hashmi, Yilian Alonso Otano, Soo I. Kim'),
+                                    html.H4('Team members: Edwin Michael (PI), Imran Mahmood Qureshi Hashmi, Yilian Alonso Otano, Soo I. Kim, Shakir Bilal'),
                                     #html.Img(src=app.get_asset_url('usf-logo-white-color.svg'), style={'width':'20%'})
                                 ]
                             ),                              
@@ -1498,7 +1550,8 @@ def render_content(tab):
                 #labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
                 #labelStyle = {'display': 'inline-block', 'margin-right': 10},
                 #style={'padding': 10, 'flex': 1}
-                inline=True,
+                #inline=True,
+                labelStyle={'display': 'inline-block'}
             ),
             html.P("* FPL: Federal Poverty Level (%)", style={'padding': 10, 'flex': 1}),
             #html.A("Federal Poverty Level", href='https://www.healthcare.gov/glossary/federal-poverty-level-fpl/', target="_blank", style={'padding': 10, 'flex': 1}),
@@ -1516,9 +1569,18 @@ def render_content(tab):
             html.P(scatter_map_explain),
             #html.P("(Steps equals Days starting March 1, 2020.)"),
             html.P("Note: For the fast web response, only a fraction of data is being used here. For best result, please contact us. This page uses "+str(SAMPLING_PERCENT_1*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
+            html.H4("Year:", className="control_label", style={'padding': 10, 'flex': 1}),
+            dcc.RadioItems(
+                id="year_scatter",
+                options=[{'label': i, 'value': i} for i in ['2020','2021']],
+                value="2021",
+                #inline=True,
+                labelStyle={'display': 'inline-block'}
+            ),
+            html.H4("Zip Code: ", className="control_label", style={'padding': 10, 'flex': 1}),
             dcc.Dropdown(
                 id="zipcode",
-                options=ZIPS,
+                options=[{'label': i, 'value': i} for i in ZIPS],
                 value=default_zipcode,
                 style=dict(width='40%',
                     display='inline-block',
@@ -1526,7 +1588,7 @@ def render_content(tab):
                 ),
                 #style={'margin-right': 10, 'padding': 1, 'flex': 1}
                 #style={"width": "200px", 'display':'flex', 'align-items':'center','justify-content':'center'},
-            ),            
+            ),
             dcc.Graph(
                 id='graph2',
                 figure=figure2
@@ -1540,9 +1602,18 @@ def render_content(tab):
             #html.P("(Steps equals Days starting March 1, 2020)"),
             html.P(heat_map_explain),
             html.P("Note: For the fast web response, only a fraction of data is being used here. For best result, please contact us. This page uses "+str(SAMPLING_PERCENT_2*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
+            html.H4("Year:", className="control_label", style={'padding': 10, 'flex': 1}),
+            dcc.RadioItems(
+                id="year_heatmap",
+                options=[{'label': i, 'value': i} for i in ['2020','2021']],
+                value="2021",
+                #inline=True,
+                labelStyle={'display': 'inline-block'}
+            ),
+            html.H4("Zip Code: ", className="control_label", style={'padding': 10, 'flex': 1}),
             dcc.Dropdown(
                 id="zipcode_heatmap",
-                options=ZIPS,
+                options=[{'label': i, 'value': i} for i in ZIPS],
                 value=default_zipcode,
                 style=dict(width='40%',
                     display='inline-block',
@@ -1550,7 +1621,7 @@ def render_content(tab):
                 ),
                 #style={'margin-right': 10, 'padding': 1, 'flex': 1}
                 #style={"width": "200px", 'display':'flex', 'align-items':'center','justify-content':'center'},
-            ),            
+            ),
             dcc.Graph(
                 id='graph3',
                 figure=figure3
@@ -1563,18 +1634,16 @@ def update_SEIR(filter_type):
     figure1 = load_SEIR(filter_type)
     return figure1
 
-#@app.callback(Output("graph2", 'figure'), Input("zipcode", "value"))
-@app.callback(Output("graph2", 'figure'), Input("zipcode", "value"))
-def update_scatter_by_zipcode(zipcode):
+@app.callback(Output("graph2", 'figure'), Input("zipcode", "value"), Input("year_scatter", "value"))
+def update_scatter_by_zipcode(zipcode, year_scatter):
     time.sleep(1)
-    figure2 = load_scatter(zipcode)
+    figure2 = load_scatter(zipcode, year_scatter)
     return figure2
 
-#@app.callback(Output("graph2", 'figure'), Input("zipcode", "value"))
-@app.callback(Output("graph3", 'figure'), Input("zipcode_heatmap", "value"))
-def update_heatmap_by_zipcode(zipcode_heatmap):
+@app.callback(Output("graph3", 'figure'), Input("zipcode_heatmap", "value"), Input("year_heatmap", "value"))
+def update_heatmap_by_zipcode(zipcode_heatmap, year_heatmap):
     time.sleep(1)
-    figure3 = load_heatmap(zipcode_heatmap)
+    figure3 = load_heatmap(zipcode_heatmap, year_heatmap)
     return figure3
 if __name__ == '__main__':
     app.run_server(debug=False,host="0.0.0.0",port=8050)

@@ -42,7 +42,7 @@ body {
 *[data-dash-is-loading="true"]{
     visibility: hidden;
 }
-/*
+
 *[data-dash-is-loading="true"]::before{
     content: "\a \a Loading...";
     white-space: pre-line;
@@ -50,7 +50,7 @@ body {
     color: magenta;
     visibility: visible;
 }
-*/
+/*
 *[data-dash-is-loading="true"].loader::before,
 *[data-dash-is-loading="true"].loader-fade::before {
     z-index: 9999;
@@ -67,7 +67,5 @@ body {
     border-radius: 50%;
     border: 2px solid #999;
     border-top-color: #222;
-    /* Wait for 1s before displaying spinner using 'offset' anomation This
-       avoids flickering when wait times are low. */
     animation: offset 1s, spinner .6s linear infinite;
-}
+}*/
