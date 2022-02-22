@@ -39,3 +39,12 @@ body {
   .footer {
       text-align: center;
   }
+*[data-dash-is-loading="true"]{
+    visibility: hidden;
+}
+*[data-dash-is-loading="true"]::before{
+    content: "\a\aLoading...";
+    display: inline-block;
+    color: magenta;
+    visibility: visible;
+}

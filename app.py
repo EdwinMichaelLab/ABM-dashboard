@@ -38,6 +38,7 @@ ZIPS = ['33510', '33511', '33527', '33534', '33547', '33548', '33549', '33556', 
             '33598', '33602', '33603', '33604', '33605', '33606', '33607', '33609', '33610', '33611', '33612', '33613',
             '33614', '33615', '33616', '33617', '33618', '33619', '33624', '33625', '33626', '33629', '33634', '33635',
             '33637', '33647']
+default_zipcode ="33510"
 
 MAX_ROWS=10000000
 path = os.path.join('..', 'EDEN-ABM-Simulator', 'SimulationEngine', 'output', '2021-12-29', 'run4')
@@ -55,13 +56,15 @@ SF2 = 5
 #CHUNK_SIZE1=4000000
 #CHUNK_SIZE2=4000000
 
+# scatter
 #SKIP_EVERY_NTH_1=100 # best at 2
 #SKIP_EVERY_NTH_1=100 # best at 2
-SAMPLING_PERCENT_1=0.2 # default 0.25
+SAMPLING_PERCENT_1=0.4 # default 0.25
 
+# heatmap
 #SKIP_EVERY_NTH_2=10 # best at 2
 #SKIP_EVERY_NTH_2=1 # best at 2
-SAMPLING_PERCENT_2=0.25 # default 0.5
+SAMPLING_PERCENT_2=0.5 # default 0.5
 
 def plot(min, mean, max):
     sub_groups = ['Cases', 'Admissions', 'Deaths']
@@ -930,33 +933,55 @@ def load_SEIR(mode):
         elif mode == 'By FPL':
             return plot_FPL(plotdf)
 
-'''
-import pymongo
-from pymongo import MongoClient
-client = MongoClient()
-print(client)
-db = client["abm"]
-'''
-
 startdate = date(2020, 3, 1)
 enddate = date(2021, 8, 31)
 
-def load_scatter(zipcode="33647"):
+'''
+legend_map={
+    "susceptible":"blue",
+    "asymptomatic":"purple",
+    "vaccinated":"olive",
+    "boosted":"olive",
+    "recovered":"green",
+    "critical": "red",
+    "dead": "black",
+    "exposed": "orange",
+    "mild": "red",
+    "presymptomatic": "red",
+    "severe":"red"}
+'''
+legend_map={
+    "susceptible":"blue",
+    "asymptomatic":"purple",
+    "vaccinated":"olive",
+    "boosted":"olive",
+    "recovered":"green",
+    "critical": "#F1948A",
+    "dead": "black",
+    "exposed": "orange",
+    "mild": "#F5B7B1",
+    "presymptomatic": "#F2D7D5",
+    "severe":"#EC7063"}
+columns_being_used_in_scatter=[
+    'step',
+    #'pid',
+    'x',
+    'y',
+    #'location',
+    #'ZIP',
+    #'type',
+    'state',
+    #'color',
+]
+
+"""
+load_scatter using read_parquet (modified from read_csv)
+"""
+def load_scatter_parquet(zipcode="33510"):
     #tp = vaex.from_csv(os.path.join(path, 'scatter.csv'), copy_index=False)
     if zipcode is None:
-        zipcode="33647"
+        zipcode="33510"
     print("zipcode:", zipcode)
-    columns_being_used_in_scatter=[
-        'step',
-        #'pid',
-        'x',
-        'y',
-        #'location',
-        #'ZIP',
-        #'type',
-        'state',
-        #'color',
-    ]
 
     #tp = pd.read_csv(os.path.join(path, 'scatter.csv'), iterator=True, chunksize=CHUNK_SIZE1, skiprows=lambda x: x % SKIP_EVERY_NTH_1)
     #pdf = pd.concat(tp, ignore_index=True)
@@ -992,32 +1017,7 @@ def load_scatter(zipcode="33647"):
     print('scatter memory size(MB)', sys.getsizeof(pdf)/(1024*1024))
     pdf = pdf.sort_values(by='step') # should be run after sampling
 
-    '''
-    legend_map={
-        "susceptible":"blue",
-        "asymptomatic":"purple",
-        "vaccinated":"olive",
-        "boosted":"olive",
-        "recovered":"green",
-        "critical": "red",
-        "dead": "black",
-        "exposed": "orange",
-        "mild": "red",
-        "presymptomatic": "red",
-        "severe":"red"}
-    '''
-    legend_map={
-        "susceptible":"blue",
-        "asymptomatic":"purple",
-        "vaccinated":"olive",
-        "boosted":"olive",
-        "recovered":"green",
-        "critical": "#F1948A",
-        "dead": "black",
-        "exposed": "orange",
-        "mild": "#F5B7B1",
-        "presymptomatic": "#F2D7D5",
-        "severe":"#EC7063"}
+
     fig = px.scatter_mapbox(pdf,
                             #title="Scatter_Map",
                             #color='color',
@@ -1072,7 +1072,112 @@ def load_scatter(zipcode="33647"):
     )
     return fig
 
+import pymongo
+from pymongo import MongoClient
+client = MongoClient()
+print(client)
+db = client["abm"]
+"""
+load_scatter via Mongodb
+"""
+def load_scatter(zipcode="33510"):
+    #tp = vaex.from_csv(os.path.join(path, 'scatter.csv'), copy_index=False)
+    if zipcode is None:
+        zipcode="33510"
+    print("zipcode:", zipcode)
 
+    #tp = pd.read_csv(os.path.join(path, 'scatter.csv'), iterator=True, chunksize=CHUNK_SIZE1, skiprows=lambda x: x % SKIP_EVERY_NTH_1)
+    #pdf = pd.concat(tp, ignore_index=True)
+
+    #pdf = dd.read_csv(os.path.join(path, 'scatter.csv'))
+
+    #pdf=pdf.drop(['pid', 'location', 'ZIP', 'type'], axis=1)
+    '''
+    pdf = pd.read_parquet(os.path.join(path, 'scatter.parquet'),
+                    filters=[('ZIP','in', [zipcode])],
+                    columns=columns_being_used_in_scatter,
+    )
+    '''
+    t1=datetime.now()
+    list_scatter=list(db.scatter.find({"ZIP":int(zipcode)}))
+    print("mongodb search result for ", zipcode, len(list_scatter),"time spent", datetime.now()-t1)
+    pdf = pd.DataFrame(list_scatter)
+
+    pdf["state"] =  pdf["state"].astype("category")
+    #pdf["step"] =  pdf["step"].astype("category")
+    pdf["step"] = pd.to_numeric(pdf["step"], downcast="unsigned")
+    pdf[['x','y']] = pdf[['x','y']].apply(pd.to_numeric, downcast="float")
+
+    datelist = pd.date_range(startdate, enddate).tolist()
+    pdf['date']=[startdate+timedelta(days=d) for d in pdf['step']]
+    pdf['date']=pdf['date'].astype(str)
+    
+
+    print('scatter data size(before '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
+    pdf = pdf.sample(frac=SAMPLING_PERCENT_1) # (???) similar to geting every 4th rows
+    print('scatter data size(after '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
+
+    #print('scatter memory usage', pdf.info())
+    print('scatter memory size(MB)', sys.getsizeof(pdf)/(1024*1024))
+    pdf = pdf.sort_values(by='step') # should be run after sampling
+
+
+    fig = px.scatter_mapbox(pdf,
+                            #title="Scatter_Map",
+                            #color='color',
+                            #animation_frame='step',
+                            animation_frame='date',
+                            #animation_group='date',
+                            color='state',
+                            #text='state',
+                            color_discrete_map=legend_map,
+                            lat='y',
+                            lon='x',                            
+                            # lat=pdf['y'],
+                            # lon=pdf['x'],
+                            zoom=9, #default 8 (0-20)
+                            height=800,
+                            width=1000,
+                            center=dict(lat=28.03711, lon=-82.46390),
+                            #mapbox_style='open-street-map',
+                            #mapbox_style='carto-darkmatter',
+                            mapbox_style='carto-positron',
+    )
+    # Add the datashader image as a mapbox layer image
+    '''
+    fig.update_layout(mapbox_style='carto-positron',
+                    #mapbox_style="carto-darkmatter",
+                    mapbox_layers = [
+                    {
+                        "sourcetype": "image",
+                        "source": img,
+                        "coordinates": coordinates
+                    }]
+    )
+    '''
+    #fig.update_traces(marker=dict(size=10))
+    #fig.update_traces(marker=dict(size=6))
+    fig.update_layout(legend=dict(
+        orientation="h",
+        xanchor="left",
+        yanchor="bottom",
+        x=0,
+        y=-0.1,
+        #title_font_family="Times New Roman",
+        font=dict(
+            family="Courier",
+            size=12,
+            color="black"
+        ),
+        bgcolor="LightSteelBlue",
+        bordercolor="Black",
+        borderwidth=2
+        )
+    )
+    return fig
+"""
+load_heatmap using read_parquet
+"""
 def load_heatmap():
     columns_being_used_in_heatmap=[
         'step',
@@ -1086,7 +1191,7 @@ def load_heatmap():
     #pdf = dd.read_csv(os.path.join(path, 'heatmap.csv'))
     #pdf = pdf.drop(['zip'], axis=1)
     pdf = pd.read_parquet(os.path.join(path, 'heatmap.parquet'),
-                    filters=[('zip','in', ['33647'])],
+                    filters=[('zip','in', ['33510'])],
                     columns=columns_being_used_in_heatmap,
     )
     pdf["step"] =  pdf["step"].astype("category")
@@ -1124,14 +1229,14 @@ def load_heatmap():
                             # mapbox_style='open-street-map'
                             mapbox_style='stamen-terrain')
     return fig
-
+    
 figure1 = load_SEIR('All cases-Not filtered')
 #figure3 = None
 print("Reading heatmap data...")
 figure3 = load_heatmap()
 #figure2 = None 
 print("Reading scatter data...")
-figure2 = load_scatter()
+figure2 = load_scatter(default_zipcode)
 
 print('SEIR/Scatter/Heatmap loading completed!')
 
@@ -1164,8 +1269,6 @@ tab_selected_style = {
 }
 
 
-
-
 app = dash.Dash(__name__, title="COVID-19 Dashboard powered by EDEN (USF-COPH-Dr.Edwin Michael Lab)")
 
 app.layout = html.Div(children=[
@@ -1191,43 +1294,26 @@ app.layout = html.Div(children=[
                         },
                 className="nav",
                 children=[
-                    html.H4("Time Plots Filters:", className="control_label", style={'padding': 10, 'flex': 1}),
-                    dcc.RadioItems(
-                        id="filter_type",
-                        options=[{'label': i, 'value': i} for i in ['All cases-Not filtered',
-                                                                    'By Age',
-                                                                    'By Gender',
-                                                                    'By Race',
-                                                                    'By FPL']],
-
-                        value="All cases-Not filtered",
-                        labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
-                        #labelStyle = {'display': 'inline-block', 'margin-right': 10},
-                        style={'padding': 10, 'flex': 1}
-                    ),
-                    html.P("* FPL: Federal Poverty Level (%)", style={'padding': 10, 'flex': 1}),
-                    #html.A("Federal Poverty Level", href='https://www.healthcare.gov/glossary/federal-poverty-level-fpl/', target="_blank", style={'padding': 10, 'flex': 1}),
-                    #html.Br(),
-                    html.H4(
-                        "(Coming soon) Select Forecast Range:",
-                        className="control_label", style={'padding': 10, 'flex': 1}
-                    ),
-                    html.Br(),
-                    dcc.RangeSlider(
-                        disabled=True,
-                        id="year_slider",
-                        min=0,
-                        max=3,
-                        step=None,
-                        marks={
-                            0: "2020",
-                            1: "2021",
-                            2: "2022",
-                            3: "2023"
-                        },
-                        value=[0, 1],
-                        #style={'padding': 10, 'flex': 1}
-                    ),
+                    # html.H4(
+                    #     "(Coming soon) Select Forecast Range:",
+                    #     className="control_label", style={'padding': 10, 'flex': 1}
+                    # ),
+                    # html.Br(),
+                    # dcc.RangeSlider(
+                    #     disabled=True,
+                    #     id="year_slider",
+                    #     min=0,
+                    #     max=3,
+                    #     step=None,
+                    #     marks={
+                    #         0: "2020",
+                    #         1: "2021",
+                    #         2: "2022",
+                    #         3: "2023"
+                    #     },
+                    #     value=[0, 1],
+                    #     #style={'padding': 10, 'flex': 1}
+                    # ),
                     #html.Br(),
                     html.H4("(Coming soon) Social Distancing Measures:", className="control_label", style={'padding': 10, 'flex': 1}),
                     dcc.RadioItems(
@@ -1254,26 +1340,16 @@ app.layout = html.Div(children=[
                         #labelStyle = {'display': 'inline-block', 'margin-right': 10},
                         style={'padding': 10, 'flex': 1}
                     ),
-                    html.H4("(Coming soon) COVID Variants:", className="control_label", style={'padding': 10, 'flex': 1}),
-                    dcc.RadioItems(
-                        id="variants",
-                        options=[{'disabled':True, 'label': i, 'value': i} for i in ['Current-Up to Delta', 'New-Omicron']],
+                    # html.H4("(Coming soon) COVID Variants:", className="control_label", style={'padding': 10, 'flex': 1}),
+                    # dcc.RadioItems(
+                    #     id="variants",
+                    #     options=[{'disabled':True, 'label': i, 'value': i} for i in ['Current-Up to Delta', 'New-Omicron']],
 
-                        value="Current",
-                        labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
-                        #labelStyle = {'display': 'inline-block', 'margin-right': 10},
-                        style={'padding': 10, 'flex': 1}
-                    ),
-                    html.H4("Select zipcode:", className="control_label", style={'padding': 10, 'flex': 1}),
-                    dcc.RadioItems(
-                        id="zipcode",
-                        options=[{'disabled':False, 'label': z, 'value': z} for z in ZIPS],
-
-                        value="33647",
-                        labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
-                        #labelStyle = {'display': 'inline-block', 'margin-right': 10},
-                        style={'padding': 10, 'flex': 1}
-                    ),
+                    #     value="Current",
+                    #     labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
+                    #     #labelStyle = {'display': 'inline-block', 'margin-right': 10},
+                    #     style={'padding': 10, 'flex': 1}
+                    # ),
                     html.Br(),
                     html.Br(),
                     html.A("Contact Info.", href='https://health.usf.edu/publichealth/overviewcoph/faculty/edwin-michael', target="_blank"),
@@ -1294,11 +1370,11 @@ app.layout = html.Div(children=[
                         },
                 className="section",
                 children=[
-                            dcc.Tabs(id="tabsgraph", value='graph1', children=[
+                            dcc.Tabs(id="tabsgraph", value='moretab', children=[
+                                dcc.Tab(label='About E.D.E.N.', value='moretab', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='COVID-19 Time Plots', value='graph1', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='COVID-19 Spatial Spread', value='graph2', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='COVID-19 Heatmap', value='graph3', style = tab_style, selected_style = tab_selected_style),
-                                dcc.Tab(label='About E.D.E.N.', value='moretab', style = tab_style, selected_style = tab_selected_style),
                             ], style = tabs_styles),
                             html.Div(id='tabs-contentgraph'),
                             html.Div(
@@ -1328,22 +1404,59 @@ heat_map_explain="The bar to the right of the map is a legend, assigning a color
 @app.callback(Output('tabs-contentgraph', 'children'),
               Input('tabsgraph', 'value'))
 def render_content(tab):
-    if tab == 'graph1':
+    if tab=='moretab':
+        return html.Div([
+            html.H3('(Except from ongoing paper)'),
+            html.H4('An Agent-based City Scale Digital Twin (EDEN) for Pandemic Analytics and Scenario Planning" (Imran et al.)'),
+            html.P('This paper presents the development of an agent-based city scale digital twin (EDEN) for the analysis and prediction of COVID-19 transmission across the population at City or County scale. EDEN is a Python based open-source geo-spatial, agent-based, parallel simulation framework. It incorporates GIS data, epidemiological disease parameters and multi-layered, multi-resolution synthetic populations for the study of infectious disease spread (e.g., COVID-19) in a geospatial virtual environment of a selected region. It models the transmission of a selected contagion and simulates its outbreak using computational disease dynamics at a selected spatial resolution (e.g., neighborhood, census tract, zip code, city, county, state, and or country). It forecasts the spread of infections over time, identify spatial hot spots across the region, and estimate the number of infected patients arriving at hospitals. It further allows to apply different public health interventions and to evaluate various lock down scenarios and counterfactuals, thus help critical decision making in rapid emergency response management.'),
+            html.H4('Full text will be available here when published. For more info, contact Dr. Edwin Michael (emichael443@usf.edu).'),
+            html.Br(),
+            html.Br(),
+            html.Img(src=app.get_asset_url('USF-EMichael-ABM-EDEN.png'), style={'margin-left': 2, 'width':'497px'}),
+            #html.Br(),
+            #html.Br(),
+            #html.Img(src=app.get_asset_url('usf-logo-white-bg.jfif'), style={'margin-left': 10, 'width':'200px'}),
+        ])
+    elif tab == 'graph1':
         return html.Div([
             html.Br(),
             html.P(time_plots_explain),
+            html.H4("Time Plots Filters:", className="control_label", style={'padding': 10, 'flex': 1}),
+            dcc.RadioItems(
+                id="filter_type",
+                options=[{'label': i, 'value': i} for i in ['All cases-Not filtered',
+                                                            'By Age',
+                                                            'By Gender',
+                                                            'By Race',
+                                                            'By FPL']],
+
+                value="All cases-Not filtered",
+                #labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
+                #labelStyle = {'display': 'inline-block', 'margin-right': 10},
+                #style={'padding': 10, 'flex': 1}
+                inline=True,
+            ),
+            html.P("* FPL: Federal Poverty Level (%)", style={'padding': 10, 'flex': 1}),
+            #html.A("Federal Poverty Level", href='https://www.healthcare.gov/glossary/federal-poverty-level-fpl/', target="_blank", style={'padding': 10, 'flex': 1}),
+            #html.Br(),
+
             dcc.Graph(
                 id='graph1',
                 figure=figure1
             )
         ])
     elif tab == 'graph2':
-        return html.Div([
+        return html.Div([      
             html.Br(),
             html.H2("Spatial plot of individual daily case emergence and spread"),
             html.P(scatter_map_explain),
             html.P("(Steps equals Days starting March 1, 2020.)"),
             html.P("(Note: For the fast web response, only a fraction of data is being used here. For best result, please contact us.)", style={'textAlign': 'center', 'color':'orange'}),
+            dcc.Dropdown(
+                id="zipcode",
+                options=ZIPS,
+                value='33510'
+            ),            
             dcc.Graph(
                 id='graph2',
                 figure=figure2
@@ -1357,45 +1470,24 @@ def render_content(tab):
             html.P("(Steps equals Days starting March 1, 2020)"),
             html.P(heat_map_explain),
             html.P("(Note: For the fast web response, only a fraction of data is being used here. For best result, please contact us.)", style={'textAlign': 'center', 'color':'orange'}),
+            html.H4("Zip Code:", className="control_label", style={'padding': 10, 'flex': 1}),
             dcc.Graph(
                 id='graph3',
                 figure=figure3
             )
         ])
-    elif tab=='moretab':
-        return html.Div([
-            html.H3('(Except from ongoing paper)'),
-            html.H4('An Agent-based City Scale Digital Twin (EDEN) for Pandemic Analytics and Scenario Planning" (Imran et al.)'),
-            html.P('This paper presents the development of an agent-based city scale digital twin (EDEN) for the analysis and prediction of COVID-19 transmission across the population at City or County scale. EDEN is a Python based open-source geo-spatial, agent-based, parallel simulation framework. It incorporates GIS data, epidemiological disease parameters and multi-layered, multi-resolution synthetic populations for the study of infectious disease spread (e.g., COVID-19) in a geospatial virtual environment of a selected region. It models the transmission of a selected contagion and simulates its outbreak using computational disease dynamics at a selected spatial resolution (e.g., neighborhood, census tract, zip code, city, county, state, and or country). It forecasts the spread of infections over time, identify spatial hot spots across the region, and estimate the number of infected patients arriving at hospitals. It further allows to apply different public health interventions and to evaluate various lock down scenarios and counterfactuals, thus help critical decision making in rapid emergency response management.'),
-            html.H4('Full text will be available here when published. For more info, contact Dr. Edwin Michael (emichael443@usf.edu).'),
-            html.Br(),
-            html.Br(),
-            html.Img(src=app.get_asset_url('USF-EMichael-ABM-EDEN.png'), style={'margin-left': 2, 'width':'497px'}),
-            #html.Br(),
-            #html.Br(),
-            #html.Img(src=app.get_asset_url('usf-logo-white-bg.jfif'), style={'margin-left': 10, 'width':'200px'}),
-        ])
 
 @app.callback(
-    Output("graph1", 'figure'),
-    [
-        Input("filter_type", "value"),
-    ],
-)
+    Output("graph1", 'figure'), Input("filter_type", "value"))
 def update_SEIR(filter_type):
     figure1 = load_SEIR(filter_type)
     return figure1
 
-@app.callback(
-    Output("graph2", 'figure'),
-    [
-        Input("zipcode", "value"),
-    ],
-)
+@app.callback(Output("graph2", 'figure'), Input("zipcode", "value"))
 def update_scatter_by_zipcode(zipcode):
     figure2 = load_scatter(zipcode)
     return figure2
-
+  
 if __name__ == '__main__':
     app.run_server(debug=False,host="0.0.0.0",port=8050)
 
