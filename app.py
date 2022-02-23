@@ -1448,10 +1448,10 @@ app.layout = html.Div(children=[
                 children=[
                             dcc.Tabs(id="tabsgraph", value='moretab', children=[
                                 dcc.Tab(label='About E.D.E.N.', value='moretab', style = tab_style, selected_style = tab_selected_style),
-                                dcc.Tab(label='COVID-19 Time Plots', value='graph1', style = tab_style, selected_style = tab_selected_style),
-                                dcc.Tab(label='COVID-19 Spatial Spread', value='graph2', style = tab_style, selected_style = tab_selected_style),
-                                dcc.Tab(label='COVID-19 Heatmap', value='graph3', style = tab_style, selected_style = tab_selected_style),
-                                dcc.Tab(label='COVID-19 Spatial Spread and Heatmap', value='graph4', style = tab_style, selected_style = tab_selected_style),
+                                dcc.Tab(label='COVID-19 Time Plots', value='tab1', style = tab_style, selected_style = tab_selected_style),
+                                dcc.Tab(label='COVID-19 Spatial Spread', value='tab2', style = tab_style, selected_style = tab_selected_style),
+                                dcc.Tab(label='COVID-19 Heatmap', value='tab3', style = tab_style, selected_style = tab_selected_style),
+                                dcc.Tab(label='COVID-19 Spatial Spread and Heatmap', value='tab4', style = tab_style, selected_style = tab_selected_style),
                             ], style = tabs_styles),
                             html.Div(id='tabs-contentgraph'),
                             html.Div(
@@ -1494,7 +1494,7 @@ def render_content(tab):
             #html.Br(),
             #html.Img(src=app.get_asset_url('usf-logo-white-bg.jfif'), style={'margin-left': 10, 'width':'200px'}),
         ])
-    elif tab == 'graph1':
+    elif tab == 'tab1':
         return html.Div([
             html.Br(),
             html.P(time_plots_explain),
@@ -1523,7 +1523,7 @@ def render_content(tab):
                 figure=load_SEIR('All cases')
             )
         ])
-    elif tab == 'graph2':
+    elif tab == 'tab2':
         return html.Div([      
             html.Br(),
             html.H2("Spatial plot of individual daily case emergence and spread"),
@@ -1556,7 +1556,7 @@ def render_content(tab):
                 figure=load_scatter("33510", "2021")
             ),
         ])
-    elif tab == 'graph3':
+    elif tab == 'tab3':
         return html.Div([
             html.Br(),
             html.H2("Heatmap of the density of daily infectious cases"),
@@ -1590,7 +1590,7 @@ def render_content(tab):
                 figure=load_heatmap("33510", "2021")
             )
         ])
-    elif tab == 'graph4':
+    elif tab == 'tab4':
         return html.Div([
             html.Br(),
             html.H4("Year:", className="control_label", style={'padding': 10, 'flex': 1}),
