@@ -1394,7 +1394,7 @@ tab_selected_style = {
 
 app = dash.Dash(__name__, title="COVID-19 Dashboard powered by EDEN (USF-COPH-Dr.Edwin Michael Lab)")
 cache = Cache(app.server, config={
-    'CACHE_TYPE': 'redis',
+    'CACHE_TYPE': 'redis', # need local redis server installation using docker(windows) or apt install(linux-ubuntu)
     'CACHE_REDIS_URL': 'redis://localhost:6379'
 })
 app.config.suppress_callback_exceptions = True
