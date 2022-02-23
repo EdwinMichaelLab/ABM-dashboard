@@ -1050,59 +1050,7 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year):
     pdf = pdf.sort_values(by='step') # should be run after sampling
     pdf.drop('step',1, inplace=True)
 
-    fig = px.scatter_mapbox(pdf,
-                            #title="Scatter_Map",
-                            #color='color',
-                            #animation_frame='step',
-                            animation_frame='date',
-                            #animation_group='date',
-                            color='state',
-                            #text='state',
-                            color_discrete_map=legend_map,
-                            lat='y',
-                            lon='x',                            
-                            # lat=pdf['y'],
-                            # lon=pdf['x'],
-                            zoom=9, #default 8 (0-20)
-                            height=800,
-                            width=1000,
-                            center=dict(lat=28.03711, lon=-82.46390),
-                            #mapbox_style='open-street-map',
-                            #mapbox_style='carto-darkmatter',
-                            mapbox_style='carto-positron',
-    )
-    # Add the datashader image as a mapbox layer image
-    '''
-    fig.update_layout(mapbox_style='carto-positron',
-                    #mapbox_style="carto-darkmatter",
-                    mapbox_layers = [
-                    {
-                        "sourcetype": "image",
-                        "source": img,
-                        "coordinates": coordinates
-                    }]
-    )
-    '''
-    #fig.update_traces(marker=dict(size=10))
-    #fig.update_traces(marker=dict(size=6))
-    fig.update_layout(legend=dict(
-        orientation="h",
-        xanchor="left",
-        yanchor="bottom",
-        x=0,
-        y=-0.1,
-        #title_font_family="Times New Roman",
-        font=dict(
-            family="Courier",
-            size=12,
-            color="black"
-        ),
-        bgcolor="LightSteelBlue",
-        bordercolor="Black",
-        borderwidth=2
-        )
-    )
-    return fig
+    return draw_scatter(pdf)
 
 """
 load_scatter via_mongodb
@@ -1162,6 +1110,9 @@ def load_scatter_mongodb(zipcode=default_zipcode, year=default_year):
     pdf = pdf.sort_values(by='step') # should be run after sampling
     pdf.drop('step',1, inplace=True)
 
+    return draw_scatter(pdf)
+
+def draw_scatter(pdf):
     fig = px.scatter_mapbox(pdf,
                             #title="Scatter_Map",
                             #color='color',
@@ -1215,6 +1166,9 @@ def load_scatter_mongodb(zipcode=default_zipcode, year=default_year):
         )
     )
     return fig
+
+
+
 """
 load_heatmap using_read_parquet
 """
@@ -1276,21 +1230,7 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year):
     pdf = pdf.sort_values(by='step')
     pdf.drop('step',1, inplace=True)
 
-    fig = px.density_mapbox(pdf,
-                            color_continuous_scale='RdYlGn_r',
-                            lat=pdf['y'],
-                            lon=pdf['x'],
-                            z=pdf['z'],
-                            #animation_frame=pdf['step'],
-                            animation_frame='date',
-                            zoom=9,
-                            opacity=0.75,
-                            height=800,
-                            width=1000,
-                            center=dict(lat=28.03711, lon=-82.46390),
-                            # mapbox_style='open-street-map'
-                            mapbox_style='stamen-terrain')
-    return fig
+    return draw_heatmap(pdf)
 
 """
 load_heatmap using_mongodb
@@ -1339,7 +1279,10 @@ def load_heatmap_mongodb(zipcode=default_zipcode, year=default_year):
     print('heatmap memory usage(MB)', sys.getsizeof(pdf)/(1024*1024))
     pdf = pdf.sort_values(by='step')
     pdf.drop('step',1, inplace=True)
+    
+    return draw_heatmap(pdf)
 
+def draw_heatmap(pdf):
     fig = px.density_mapbox(pdf,
                             color_continuous_scale='RdYlGn_r',
                             lat=pdf['y'],
@@ -1356,12 +1299,16 @@ def load_heatmap_mongodb(zipcode=default_zipcode, year=default_year):
                             mapbox_style='stamen-terrain')
     return fig
 
-figure1 = load_SEIR('All cases')
-print("Reading heatmap data...")
-figure3 = load_heatmap(default_zipcode, default_year)
-print("Reading scatter data...")
-figure2 = load_scatter(default_zipcode, default_year)
-print('SEIR/Scatter/Heatmap loading completed!')
+"""
+main plotly dash start here.
+"""
+
+# figure1 = load_SEIR('All cases')
+# print("Reading heatmap data...")
+# figure3 = load_heatmap(default_zipcode, default_year)
+# print("Reading scatter data...")
+# figure2 = load_scatter(default_zipcode, default_year)
+# print('SEIR/Scatter/Heatmap loading completed!')
 
 colors = {
     #'background': '#111111',
@@ -1504,6 +1451,7 @@ app.layout = html.Div(children=[
                                 dcc.Tab(label='COVID-19 Time Plots', value='graph1', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='COVID-19 Spatial Spread', value='graph2', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='COVID-19 Heatmap', value='graph3', style = tab_style, selected_style = tab_selected_style),
+                                dcc.Tab(label='COVID-19 Spatial Spread and Heatmap', value='graph4', style = tab_style, selected_style = tab_selected_style),
                             ], style = tabs_styles),
                             html.Div(id='tabs-contentgraph'),
                             html.Div(
@@ -1531,11 +1479,12 @@ These inviduals and their spread over time is represented by the spatial scatter
 heat_map_explain="The bar to the right of the map is a legend, assigning a color on a gradient based on the number of cases within a zip code. The zip code areas with the highest number of cases will be red and the zip code areas with the lowest number of cases will be dark green. A z-value is computed based on the aggerate cases at a certain location and represents the heat of that location. A higher z-value represents higher density of the cases at a given location."
 
 @app.callback(Output('tabs-contentgraph', 'children'), Input('tabsgraph', 'value'))
+@cache.memoize(timeout=timeout)  # in seconds
 def render_content(tab):
     if tab=='moretab':
         return html.Div([
             html.H3('(Except from ongoing paper)'),
-            html.H4('An Agent-based City Scale Digital Twin (EDEN) for Pandemic Analytics and Scenario Planning" (Imran et al.)'),
+            html.H4('An Agent-based City Scale Digital Twin (EDEN) for Pandemic Analytics and Scenario Planning'),
             html.P('This paper presents the development of an agent-based city scale digital twin (EDEN) for the analysis and prediction of COVID-19 transmission across the population at City or County scale. EDEN is a Python based open-source geo-spatial, agent-based, parallel simulation framework. It incorporates GIS data, epidemiological disease parameters and multi-layered, multi-resolution synthetic populations for the study of infectious disease spread (e.g., COVID-19) in a geospatial virtual environment of a selected region. It models the transmission of a selected contagion and simulates its outbreak using computational disease dynamics at a selected spatial resolution (e.g., neighborhood, census tract, zip code, city, county, state, and or country). It forecasts the spread of infections over time, identify spatial hot spots across the region, and estimate the number of infected patients arriving at hospitals. It further allows to apply different public health interventions and to evaluate various lock down scenarios and counterfactuals, thus help critical decision making in rapid emergency response management.'),
             html.H4('Full text will be available here when published. For more info, contact Dr. Edwin Michael (emichael443@usf.edu).'),
             html.Br(),
@@ -1570,7 +1519,8 @@ def render_content(tab):
             #html.Br(),
             dcc.Graph(
                 id='graph1',
-                figure=figure1
+                #figure=figure1,
+                figure=load_SEIR('All cases')
             )
         ])
     elif tab == 'graph2':
@@ -1584,7 +1534,7 @@ def render_content(tab):
             dcc.RadioItems(
                 id="year_scatter",
                 options=[{'label': i, 'value': i} for i in ['2020','2021']],
-                value="2021",
+                value=default_year,
                 #inline=True,
                 labelStyle={'display': 'inline-block'}
             ),
@@ -1602,7 +1552,8 @@ def render_content(tab):
             ),
             dcc.Graph(
                 id='graph2',
-                figure=figure2
+                #figure=figure2,
+                figure=load_scatter("33510", "2021")
             ),
         ])
     elif tab == 'graph3':
@@ -1617,7 +1568,7 @@ def render_content(tab):
             dcc.RadioItems(
                 id="year_heatmap",
                 options=[{'label': i, 'value': i} for i in ['2020','2021']],
-                value="2021",
+                value=default_year,
                 #inline=True,
                 labelStyle={'display': 'inline-block'}
             ),
@@ -1635,8 +1586,41 @@ def render_content(tab):
             ),
             dcc.Graph(
                 id='graph3',
-                figure=figure3
+                #figure=figure3,
+                figure=load_heatmap("33510", "2021")
             )
+        ])
+    elif tab == 'graph4':
+        return html.Div([
+            html.Br(),
+            html.H4("Year:", className="control_label", style={'padding': 10, 'flex': 1}),
+            dcc.RadioItems(
+                id="year_for_all",
+                options=[{'label': i, 'value': i} for i in ['2020','2021']],
+                value=default_year,
+                #inline=True,
+                labelStyle={'display': 'inline-block'}
+            ),
+            html.H4("Zip Code: ", className="control_label", style={'padding': 10, 'flex': 1}),
+            dcc.Dropdown(
+                id="zipcode_for_all",
+                options=[{'label': i, 'value': i} for i in ZIPS],
+                value=default_zipcode,
+                style=dict(width='40%',
+                    display='inline-block',
+                    verticalAlign="middle"
+                ),
+            ),
+            dcc.Graph(
+                id='graph22',
+                #figure=figure2,
+                figure=load_scatter("33510", "2021")
+            ),
+            dcc.Graph(
+                id='graph33',
+                #figure=figure3,
+                figure=load_heatmap("33510", "2021")
+            ),
         ])
 
 @app.callback(Output("graph1", 'figure'), Input("filter_type", "value"))
@@ -1658,6 +1642,15 @@ def update_heatmap_by_zipcode(zipcode_heatmap, year_heatmap):
     time.sleep(1)
     figure3 = load_heatmap(zipcode_heatmap, year_heatmap)
     return figure3
+
+@app.callback([Output("graph22", 'figure'), Output("graph33", 'figure')],
+            [Input("zipcode_for_all", "value"), Input("year_for_all", "value")])
+@cache.memoize(timeout=timeout)  # in seconds
+def update_scatter_and_heatmap(zipcode_for_all, year_for_all):
+    time.sleep(1)
+    figure22 = load_scatter(zipcode_for_all, year_for_all)
+    figure33 = load_heatmap(zipcode_for_all, year_for_all)
+    return figure22, figure33
 
 if __name__ == '__main__':
     app.run_server(debug=False,host="0.0.0.0",port=8050)
