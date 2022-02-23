@@ -70,6 +70,9 @@ enddate = date(2021, 8, 31)
 default_zipcode ="33510"
 default_year ="2021"
 
+heatmap_size=0
+scatter_size=0
+
 def load_scatter(zipcode, year, width, height):
     #return load_scatter_mongodb(zipcode, year)
     return load_scatter_read_parquet(zipcode, year, width, height)
@@ -1010,8 +1013,8 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year, width=
     #pdf=pdf.drop(['pid', 'location', 'ZIP', 'type'], axis=1)
     t1=datetime.now()
     #pdf = pd.read_parquet(os.path.join(path, 'scatter.parquet'),
-    #pdf = pd.read_parquet(os.path.join(path, 'scatter.snappy.parquet'),
-    pdf = pd.read_parquet(os.path.join(path, 'scatter.parquet.gzip'),
+    #pdf = pd.read_parquet(os.path.join(path, 'scatter.parquet.gzip'),
+    pdf = pd.read_parquet(os.path.join(path, 'scatter.snappy.parquet'),
                     filters=[('ZIP','in', [zipcode]), ('step','>=', min_step), ('step', '<=', max_step)],
                     columns=columns_being_used_in_scatter,
     )
@@ -1032,7 +1035,7 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year, width=
     #print('scatter memory usage', pdf.info())
     print('scatter memory size(MB)', sys.getsizeof(pdf)/(1024*1024))
     pdf = pdf.sort_values(by='step') # should be run after sampling
-    pdf.drop('step',1, inplace=True)
+    pdf.drop('step',axis=1, inplace=True)
 
     return draw_scatter(pdf, width, height)
 
@@ -1092,7 +1095,7 @@ load_scatter via_mongodb
 #     #print('scatter memory usage', pdf.info())
 #     print('scatter memory size(MB)', sys.getsizeof(pdf)/(1024*1024))
 #     pdf = pdf.sort_values(by='step') # should be run after sampling
-#     pdf.drop('step',1, inplace=True)
+#     pdf.drop('step',axis=1, inplace=True)
 
 #     return draw_scatter(pdf, width, height)
 
@@ -1129,8 +1132,8 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, width=
     #pdf = pdf.drop(['zip'], axis=1)
     t1=datetime.now()
     #pdf = pd.read_parquet(os.path.join(path, 'heatmap.parquet'),
-    #pdf = pd.read_parquet(os.path.join(path, 'heatmap.snappy.parquet'),
-    pdf = pd.read_parquet(os.path.join(path, 'heatmap.parquet.gzip'),
+    #pdf = pd.read_parquet(os.path.join(path, 'heatmap.parquet.gzip'),
+    pdf = pd.read_parquet(os.path.join(path, 'heatmap.snappy.parquet'),
                     filters=[('zip','in', [zipcode]), ('step','>=', min_step), ('step', '<=', max_step)],
                     columns=columns_being_used_in_heatmap,
     )
@@ -1152,10 +1155,11 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, width=
     print('heatmap data size(before '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
     pdf = pdf.sample(frac=SAMPLING_PERCENT_2)
     print('heatmap data size(after '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
+
     #print('heatmap memory size', pdf.info())
     print('heatmap memory usage(MB)', sys.getsizeof(pdf)/(1024*1024))
     pdf = pdf.sort_values(by='step')
-    pdf.drop('step',1, inplace=True)
+    pdf.drop('step',axis=1, inplace=True)
 
     return draw_heatmap(pdf, width, height)
 
@@ -1205,11 +1209,13 @@ load_heatmap using_mongodb
 #     #print('heatmap memory size', pdf.info())
 #     print('heatmap memory usage(MB)', sys.getsizeof(pdf)/(1024*1024))
 #     pdf = pdf.sort_values(by='step')
-#     pdf.drop('step',1, inplace=True)
+#     pdf.drop('step',axis=1, inplace=True)
     
 #     return draw_heatmap(pdf, width, height)
 
 def draw_scatter(pdf, width, height):
+    global scatter_size
+    scatter_size=pdf.size    
     fig = px.scatter_mapbox(pdf,
                             #title="Scatter_Map",
                             #color='color',
@@ -1254,6 +1260,8 @@ def draw_scatter(pdf, width, height):
     return fig
 
 def draw_heatmap(pdf, width, height):
+    global heatmap_size
+    heatmap_size=pdf.size    
     fig = px.density_mapbox(pdf,
                             color_continuous_scale='RdYlGn_r',
                             lat=pdf['y'],
@@ -1318,6 +1326,7 @@ cache = Cache(app.server, config={
     'CACHE_REDIS_URL': 'redis://localhost:6379'
 })
 app.config.suppress_callback_exceptions = True
+
 timeout=2*60*60
 
 app.layout = html.Div(children=[
@@ -1498,7 +1507,7 @@ def render_content(tab):
             html.H2("Spatial plot of individual daily case emergence and spread"),
             html.P(scatter_map_explain),
             #html.P("(Steps equals Days starting March 1, 2020.)"),
-            html.P("Note: For the fast web response, only a fraction of data is being used here. For best result, please contact us. This page uses "+str(SAMPLING_PERCENT_1*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
+            html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_1*100)+" % (data size="+str(scatter_size)+")", style={'textAlign': 'center', 'color':'orange'}),
             html.Div(children=[
                 html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
                 dcc.RadioItems(
@@ -1512,11 +1521,10 @@ def render_content(tab):
                     id="zipcode_scatter",
                     options=[{'label': i, 'value': i} for i in ZIPS],
                     value=default_zipcode,
-                    style={'width':'200px', 'display':'inline-block', 'verticalAlign':'middle'}
+                    style={'width':'150px', 'display':'inline-block', 'verticalAlign':'middle'}
                 ),
             ], style={'width': '100%', 'display': 'inline-block'}),
             dcc.Graph(
-                id='graph2',
                 #figure=figure2,
                 figure=load_scatter("33510", "2021", 900, 750)
             ),
@@ -1528,7 +1536,7 @@ def render_content(tab):
             #html.P("(Z values represents the number of cases within the same zipcode area.)"),
             #html.P("(Steps equals Days starting March 1, 2020)"),
             html.P(heat_map_explain),
-            html.P("Note: For the fast web response, only a fraction of data is being used here. For best result, please contact us. This page uses "+str(SAMPLING_PERCENT_2*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
+            html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_2*100)+" % (data size="+str(heatmap_size)+")", style={'textAlign': 'center', 'color':'orange'}),
             html.Div(children=[
                 html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
                 dcc.RadioItems(
@@ -1542,11 +1550,10 @@ def render_content(tab):
                     id="zipcode_heatmap",
                     options=[{'label': i, 'value': i} for i in ZIPS],
                     value=default_zipcode,
-                    style={'width':'200px', 'display':'inline-block', 'verticalAlign':'middle'}
+                    style={'width':'150px', 'display':'inline-block', 'verticalAlign':'middle'}
                 ),
             ], style={'width': '100%', 'display': 'inline-block'}),
             dcc.Graph(
-                id='graph3',
                 #figure=figure3,
                 figure=load_heatmap("33510", "2021", 900, 750)
             )
@@ -1567,7 +1574,7 @@ def render_content(tab):
                     id="zipcode_for_all",
                     options=[{'label': i, 'value': i} for i in ZIPS],
                     value=default_zipcode,
-                    style={'width':'200px', 'display':'inline-block', 'verticalAlign':'middle'}
+                    style={'width':'150px', 'display':'inline-block', 'verticalAlign':'middle'}
                 ),
             ], style={'width': '100%', 'display': 'inline-block'}),
             # dcc.Graph(
@@ -1595,22 +1602,21 @@ def render_content(tab):
 @app.callback(Output("graph1", 'figure'), Input("filter_type", "value"))
 @cache.memoize(timeout=timeout)  # in seconds
 def update_SEIR(filter_type):
-    figure1 = load_SEIR(filter_type)
-    return figure1
+    return load_SEIR(filter_type)
 
-@app.callback(Output("graph2", 'figure'), Input("zipcode_scatter", "value"), Input("year_scatter", "value"))
+@app.callback(Output("graph2", 'figure'),
+            Input("zipcode_scatter", "value"), Input("year_scatter", "value"))
 @cache.memoize(timeout=timeout)  # in seconds
 def update_scatter_by_zipcode(zipcode_scatter, year_scatter):
     time.sleep(1)
-    figure2 = load_scatter(zipcode_scatter, year_scatter, width=900, height=750)
-    return figure2
+    return load_scatter(zipcode_scatter, year_scatter, width=900, height=750)
 
-@app.callback(Output("graph3", 'figure'), Input("zipcode_heatmap", "value"), Input("year_heatmap", "value"))
+@app.callback(Output("graph3", 'figure'),
+            Input("zipcode_heatmap", "value"), Input("year_heatmap", "value"))
 @cache.memoize(timeout=timeout)  # in seconds
 def update_heatmap_by_zipcode(zipcode_heatmap, year_heatmap):
     time.sleep(1)
-    figure3 = load_heatmap(zipcode_heatmap, year_heatmap, width=900, height=750)
-    return figure3
+    return load_heatmap(zipcode_heatmap, year_heatmap, width=900, height=750)
 
 @app.callback([Output("graph22", 'figure'), Output("graph33", 'figure')],
             [Input("zipcode_for_all", "value"), Input("year_for_all", "value")])
