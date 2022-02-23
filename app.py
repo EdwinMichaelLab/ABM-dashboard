@@ -48,28 +48,20 @@ ZIPS = ['33510', '33511', '33527', '33534', '33547', '33548', '33549', '33556', 
 
 MAX_ROWS=10000000
 path = os.path.join('..', 'EDEN-ABM-Simulator', 'SimulationEngine', 'output', '2021-12-29', 'run4')
-
-#path = os.path.join('..', 'EDEN-ABM-Simulator-old', 'SimulationEngine', 'output', '2021-12-10', 'run12')
-#path2 = os.path.join('..', 'EDEN-ABM-Simulator', 'SimulationEngine', 'output', '2021-12-21', 'run2')
 print(path)
-#print(path2)
 
 SF1 = 22
 SF2 = 5
 
 #CHUNK_SIZE1=2000000
 #CHUNK_SIZE2=2000000
-#CHUNK_SIZE1=4000000
-#CHUNK_SIZE2=4000000
 
 # scatter
-#SKIP_EVERY_NTH_1=100 # best at 2
 #SKIP_EVERY_NTH_1=100 # best at 2
 SAMPLING_PERCENT_1=0.2 # default 0.25
 
 # heatmap
 #SKIP_EVERY_NTH_2=10 # best at 2
-#SKIP_EVERY_NTH_2=1 # best at 2
 SAMPLING_PERCENT_2=0.25 # default 0.5
 
 startdate = date(2020, 3, 1)
@@ -1010,8 +1002,6 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year):
         'state',
         #'color',
     ]
-    #tp = vaex.from_csv(os.path.join(path, 'scatter.csv'), copy_index=False)
- 
     #tp = pd.read_csv(os.path.join(path, 'scatter.csv'), iterator=True, chunksize=CHUNK_SIZE1, skiprows=lambda x: x % SKIP_EVERY_NTH_1)
     #pdf = pd.concat(tp, ignore_index=True)
 
@@ -1032,15 +1022,9 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year):
     pdf[['x','y']] = pdf[['x','y']].apply(pd.to_numeric, downcast="float")
 
     #datelist = pd.date_range(startdate, enddate).tolist()
-    pdf['date']=[startdate+timedelta(days=d) for d in pdf['step']]
-    pdf['date']=pdf['date'].astype(str)
+    pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
+    pdf['Date']=pdf['Date'].astype(str)
     
-    #scatter=db.scatter
-    #list_scatter=list(scatter.find({}))
-    ####list_scatter=list(scatter.find({}))[::100] # every other item
-    #print(len(list_scatter))
-    #pdf = pd.DataFrame(list_scatter)
-
     print('scatter data size(before '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
     pdf = pdf.sample(frac=SAMPLING_PERCENT_1) # (???) similar to geting every 4th rows
     print('scatter data size(after '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
@@ -1097,8 +1081,8 @@ def load_scatter_mongodb(zipcode=default_zipcode, year=default_year):
     pdf[['x','y']] = pdf[['x','y']].apply(pd.to_numeric, downcast="float")
 
     #datelist = pd.date_range(startdate, enddate).tolist()
-    pdf['date']=[startdate+timedelta(days=d) for d in pdf['step']]
-    pdf['date']=pdf['date'].astype(str)
+    pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
+    pdf['Date']=pdf['Date'].astype(str)
     
 
     print('scatter data size(before '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
@@ -1111,63 +1095,6 @@ def load_scatter_mongodb(zipcode=default_zipcode, year=default_year):
     pdf.drop('step',1, inplace=True)
 
     return draw_scatter(pdf)
-
-def draw_scatter(pdf):
-    fig = px.scatter_mapbox(pdf,
-                            #title="Scatter_Map",
-                            #color='color',
-                            #animation_frame='step',
-                            animation_frame='date',
-                            #animation_group='date',
-                            color='state',
-                            #text='state',
-                            color_discrete_map=legend_map,
-                            lat='y',
-                            lon='x',                            
-                            # lat=pdf['y'],
-                            # lon=pdf['x'],
-                            zoom=9, #default 8 (0-20)
-                            height=800,
-                            width=1000,
-                            center=dict(lat=28.03711, lon=-82.46390),
-                            #mapbox_style='open-street-map',
-                            #mapbox_style='carto-darkmatter',
-                            mapbox_style='carto-positron',
-    )
-    # Add the datashader image as a mapbox layer image
-    '''
-    fig.update_layout(mapbox_style='carto-positron',
-                    #mapbox_style="carto-darkmatter",
-                    mapbox_layers = [
-                    {
-                        "sourcetype": "image",
-                        "source": img,
-                        "coordinates": coordinates
-                    }]
-    )
-    '''
-    #fig.update_traces(marker=dict(size=10))
-    #fig.update_traces(marker=dict(size=6))
-    fig.update_layout(legend=dict(
-        orientation="h",
-        xanchor="left",
-        yanchor="bottom",
-        x=0,
-        y=-0.1,
-        #title_font_family="Times New Roman",
-        font=dict(
-            family="Courier",
-            size=12,
-            color="black"
-        ),
-        bgcolor="LightSteelBlue",
-        bordercolor="Black",
-        borderwidth=2
-        )
-    )
-    return fig
-
-
 
 """
 load_heatmap using_read_parquet
@@ -1214,8 +1141,8 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year):
     pdf["z"] = pd.to_numeric(pdf["z"], downcast="unsigned")
 
     #datelist = pd.date_range(startdate, enddate).tolist()
-    pdf['date']=[startdate+timedelta(days=d) for d in pdf['step']]
-    pdf['date']=pdf['date'].astype(str)
+    pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
+    pdf['Date']=pdf['Date'].astype(str)
 
     #heatmap=db.heatmap
     #list_heatmap=list(heatmap.find({}))
@@ -1269,8 +1196,8 @@ def load_heatmap_mongodb(zipcode=default_zipcode, year=default_year):
     pdf["z"] = pd.to_numeric(pdf["z"], downcast="unsigned")
 
     #datelist = pd.date_range(startdate, enddate).tolist()
-    pdf['date']=[startdate+timedelta(days=d) for d in pdf['step']]
-    pdf['date']=pdf['date'].astype(str)
+    pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
+    pdf['Date']=pdf['Date'].astype(str)
 
     print('heatmap data size(before '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
     pdf = pdf.sample(frac=SAMPLING_PERCENT_2)
@@ -1282,6 +1209,50 @@ def load_heatmap_mongodb(zipcode=default_zipcode, year=default_year):
     
     return draw_heatmap(pdf)
 
+def draw_scatter(pdf):
+    fig = px.scatter_mapbox(pdf,
+                            #title="Scatter_Map",
+                            #color='color',
+                            #animation_frame='step',
+                            animation_frame='Date',
+                            #animation_group='date',
+                            color='state',
+                            #text='state',
+                            color_discrete_map=legend_map,
+                            lat='y',
+                            lon='x',                            
+                            # lat=pdf['y'],
+                            # lon=pdf['x'],
+                            zoom=9, #default 8 (0-20)
+                            height=750,
+                            width=900,
+                            center=dict(lat=28.03711, lon=-82.46390),
+                            #mapbox_style='open-street-map',
+                            #mapbox_style='carto-darkmatter',
+                            mapbox_style='carto-positron',
+    )
+
+    #fig.update_traces(marker=dict(size=10))
+    #fig.update_traces(marker=dict(size=6))
+    fig.update_layout(legend=dict(
+        orientation="h",
+        xanchor="left",
+        yanchor="bottom",
+        x=0,
+        y=-0.1,
+        #title_font_family="Times New Roman",
+        font=dict(
+            family="Courier",
+            size=12,
+            color="black"
+        ),
+        bgcolor="LightSteelBlue",
+        bordercolor="Black",
+        borderwidth=2
+        )
+    )
+    return fig
+
 def draw_heatmap(pdf):
     fig = px.density_mapbox(pdf,
                             color_continuous_scale='RdYlGn_r',
@@ -1289,11 +1260,11 @@ def draw_heatmap(pdf):
                             lon=pdf['x'],
                             z=pdf['z'],
                             #animation_frame=pdf['step'],
-                            animation_frame='date',
+                            animation_frame='Date',
                             zoom=9,
                             opacity=0.75,
-                            height=800,
-                            width=1000,
+                            height=750,
+                            width=900,
                             center=dict(lat=28.03711, lon=-82.46390),
                             # mapbox_style='open-street-map'
                             mapbox_style='stamen-terrain')
@@ -1338,8 +1309,10 @@ tab_selected_style = {
     'border-radius': '15px',
 }
 
-
-app = dash.Dash(__name__, title="COVID-19 Dashboard powered by EDEN (USF-COPH-Dr.Edwin Michael Lab)")
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+app = dash.Dash(__name__, 
+    title="COVID-19 Dashboard powered by EDEN (USF-COPH-Dr.Edwin Michael Lab)",)
+#    external_stylesheets=external_stylesheets)
 cache = Cache(app.server, config={
     'CACHE_TYPE': 'redis', # need local redis server installation using docker(windows) or apt install(linux-ubuntu)
     'CACHE_REDIS_URL': 'redis://localhost:6379'
@@ -1508,10 +1481,6 @@ def render_content(tab):
                                                             'By FPL']],
 
                 value="All cases",
-                #labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
-                #labelStyle = {'display': 'inline-block', 'margin-right': 10},
-                #style={'padding': 10, 'flex': 1}
-                #inline=True,
                 labelStyle={'display': 'inline-block'}
             ),
             html.P("* FPL: Federal Poverty Level (%)", style={'padding': 10, 'flex': 1}),
@@ -1547,8 +1516,6 @@ def render_content(tab):
                     display='inline-block',
                     verticalAlign="middle"
                 ),
-                #style={'margin-right': 10, 'padding': 1, 'flex': 1}
-                #style={"width": "200px", 'display':'flex', 'align-items':'center','justify-content':'center'},
             ),
             dcc.Graph(
                 id='graph2',
@@ -1581,8 +1548,6 @@ def render_content(tab):
                     display='inline-block',
                     verticalAlign="middle"
                 ),
-                #style={'margin-right': 10, 'padding': 1, 'flex': 1}
-                #style={"width": "200px", 'display':'flex', 'align-items':'center','justify-content':'center'},
             ),
             dcc.Graph(
                 id='graph3',
@@ -1620,7 +1585,7 @@ def render_content(tab):
                 id='graph33',
                 #figure=figure3,
                 figure=load_heatmap("33510", "2021")
-            ),
+            )
         ])
 
 @app.callback(Output("graph1", 'figure'), Input("filter_type", "value"))
