@@ -1525,6 +1525,7 @@ def render_content(tab):
                 ),
             ], style={'width': '100%', 'display': 'inline-block'}),
             dcc.Graph(
+                id="graph2",
                 #figure=figure2,
                 figure=load_scatter("33510", "2021", 900, 750)
             ),
@@ -1554,6 +1555,7 @@ def render_content(tab):
                 ),
             ], style={'width': '100%', 'display': 'inline-block'}),
             dcc.Graph(
+                id="graph3",
                 #figure=figure3,
                 figure=load_heatmap("33510", "2021", 900, 750)
             )
@@ -1590,10 +1592,12 @@ def render_content(tab):
             html.Div(children=[
                 html.Div(
                     dcc.Graph(
+                        id='graph22',
                         figure= load_scatter("33510", "2021", width=750, height=600),
                     ), style={'display': 'inline-block'}),
                 html.Div(
                     dcc.Graph(
+                        id='graph33',
                         figure=load_heatmap("33510", "2021", width=750, height=600),
                     ), style={'display': 'inline-block'})
             ], style={'width': '100%', 'display': 'inline-block'})            
@@ -1605,14 +1609,14 @@ def update_SEIR(filter_type):
     return load_SEIR(filter_type)
 
 @app.callback(Output("graph2", 'figure'),
-            Input("zipcode_scatter", "value"), Input("year_scatter", "value"))
+            [Input("zipcode_scatter", "value"), Input("year_scatter", "value")])
 @cache.memoize(timeout=timeout)  # in seconds
 def update_scatter_by_zipcode(zipcode_scatter, year_scatter):
     time.sleep(1)
     return load_scatter(zipcode_scatter, year_scatter, width=900, height=750)
 
 @app.callback(Output("graph3", 'figure'),
-            Input("zipcode_heatmap", "value"), Input("year_heatmap", "value"))
+            [Input("zipcode_heatmap", "value"), Input("year_heatmap", "value")])
 @cache.memoize(timeout=timeout)  # in seconds
 def update_heatmap_by_zipcode(zipcode_heatmap, year_heatmap):
     time.sleep(1)
