@@ -929,7 +929,7 @@ def get_RMSE(zip, actual, simulated):
 
 
 def load_SEIR(mode):
-    if mode=='All cases-Not filtered':
+    if mode=='All cases':
         dlist = []
         for root, dirs, files in os.walk(path):
         #for root, dirs, files in os.walk(path2):
@@ -1356,7 +1356,7 @@ def load_heatmap_mongodb(zipcode=default_zipcode, year=default_year):
                             mapbox_style='stamen-terrain')
     return fig
 
-figure1 = load_SEIR('All cases-Not filtered')
+figure1 = load_SEIR('All cases')
 print("Reading heatmap data...")
 figure3 = load_heatmap(default_zipcode, default_year)
 print("Reading scatter data...")
@@ -1530,8 +1530,7 @@ These inviduals and their spread over time is represented by the spatial scatter
 
 heat_map_explain="The bar to the right of the map is a legend, assigning a color on a gradient based on the number of cases within a zip code. The zip code areas with the highest number of cases will be red and the zip code areas with the lowest number of cases will be dark green. A z-value is computed based on the aggerate cases at a certain location and represents the heat of that location. A higher z-value represents higher density of the cases at a given location."
 
-@app.callback(Output('tabs-contentgraph', 'children'),
-              Input('tabsgraph', 'value'))
+@app.callback(Output('tabs-contentgraph', 'children'), Input('tabsgraph', 'value'))
 def render_content(tab):
     if tab=='moretab':
         return html.Div([
@@ -1553,13 +1552,13 @@ def render_content(tab):
             html.H4("Time Plots Filters:", className="control_label", style={'padding': 10, 'flex': 1}),
             dcc.RadioItems(
                 id="filter_type",
-                options=[{'label': i, 'value': i} for i in ['All cases-Not filtered',
+                options=[{'label': i, 'value': i} for i in ['All cases',
                                                             'By Age',
                                                             'By Gender',
                                                             'By Race',
                                                             'By FPL']],
 
-                value="All cases-Not filtered",
+                value="All cases",
                 #labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
                 #labelStyle = {'display': 'inline-block', 'margin-right': 10},
                 #style={'padding': 10, 'flex': 1}
@@ -1569,7 +1568,6 @@ def render_content(tab):
             html.P("* FPL: Federal Poverty Level (%)", style={'padding': 10, 'flex': 1}),
             #html.A("Federal Poverty Level", href='https://www.healthcare.gov/glossary/federal-poverty-level-fpl/', target="_blank", style={'padding': 10, 'flex': 1}),
             #html.Br(),
-
             dcc.Graph(
                 id='graph1',
                 figure=figure1
@@ -1660,6 +1658,7 @@ def update_heatmap_by_zipcode(zipcode_heatmap, year_heatmap):
     time.sleep(1)
     figure3 = load_heatmap(zipcode_heatmap, year_heatmap)
     return figure3
+
 if __name__ == '__main__':
     app.run_server(debug=False,host="0.0.0.0",port=8050)
 
