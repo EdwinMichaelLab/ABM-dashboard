@@ -32,11 +32,11 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_percentage_error
 #import vaex
 
-import pymongo
-from pymongo import MongoClient
-client = MongoClient()
-print(client)
-db = client["abm"]
+# import pymongo
+# from pymongo import MongoClient
+# client = MongoClient()
+# print(client)
+# db = client["abm"]
 
 from flask_caching import Cache
 
@@ -70,13 +70,13 @@ enddate = date(2021, 8, 31)
 default_zipcode ="33510"
 default_year ="2021"
 
-def load_scatter(zipcode, year):
+def load_scatter(zipcode, year, width, height):
     #return load_scatter_mongodb(zipcode, year)
-    return load_scatter_read_parquet(zipcode, year)
+    return load_scatter_read_parquet(zipcode, year, width, height)
 
-def load_heatmap(zipcode,year):
+def load_heatmap(zipcode,year, width, height):
     #return load_heatmap_mongodb(zipcode, year)
-    return load_heatmap_read_parquet(zipcode,year)
+    return load_heatmap_read_parquet(zipcode,year, width, height)
 '''
 legend_map={
     "susceptible":"blue",
@@ -974,7 +974,7 @@ def load_SEIR(mode):
 """
 load_scatter using_read_parquet
 """
-def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year):
+def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year, width=900, height=750):
     total_steps = enddate - startdate
     step_until_lastday_of_2020=date(2020, 12, 31)-startdate
     min_step=1
@@ -1034,72 +1034,72 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year):
     pdf = pdf.sort_values(by='step') # should be run after sampling
     pdf.drop('step',1, inplace=True)
 
-    return draw_scatter(pdf)
+    return draw_scatter(pdf, width, height)
 
 """
 load_scatter via_mongodb
 """
-def load_scatter_mongodb(zipcode=default_zipcode, year=default_year):
-    total_steps = enddate - startdate
-    step_until_lastday_of_2020=date(2020, 12, 31)-startdate
-    min_step=1
-    max_step=total_steps.days
-    if year=="2020":
-        min_step=1
-        max_step=step_until_lastday_of_2020.days
-    elif year=="2021":
-        min_step=step_until_lastday_of_2020.days + 1
-        max_step=total_steps.days
+# def load_scatter_mongodb(zipcode=default_zipcode, year=default_year, width=900, height=750):
+#     total_steps = enddate - startdate
+#     step_until_lastday_of_2020=date(2020, 12, 31)-startdate
+#     min_step=1
+#     max_step=total_steps.days
+#     if year=="2020":
+#         min_step=1
+#         max_step=step_until_lastday_of_2020.days
+#     elif year=="2021":
+#         min_step=step_until_lastday_of_2020.days + 1
+#         max_step=total_steps.days
  
-    if zipcode is None:
-        zipcode=default_zipcode
-    print("zipcode:", zipcode)
-    print(year, min_step, max_step)
+#     if zipcode is None:
+#         zipcode=default_zipcode
+#     print("zipcode:", zipcode)
+#     print(year, min_step, max_step)
 
-    #tp = vaex.from_csv(os.path.join(path, 'scatter.csv'), copy_index=False)
+#     #tp = vaex.from_csv(os.path.join(path, 'scatter.csv'), copy_index=False)
 
-    #tp = pd.read_csv(os.path.join(path, 'scatter.csv'), iterator=True, chunksize=CHUNK_SIZE1, skiprows=lambda x: x % SKIP_EVERY_NTH_1)
-    #pdf = pd.concat(tp, ignore_index=True)
+#     #tp = pd.read_csv(os.path.join(path, 'scatter.csv'), iterator=True, chunksize=CHUNK_SIZE1, skiprows=lambda x: x % SKIP_EVERY_NTH_1)
+#     #pdf = pd.concat(tp, ignore_index=True)
 
-    #pdf = dd.read_csv(os.path.join(path, 'scatter.csv'))
+#     #pdf = dd.read_csv(os.path.join(path, 'scatter.csv'))
 
-    #pdf=pdf.drop(['pid', 'location', 'ZIP', 'type'], axis=1)
+#     #pdf=pdf.drop(['pid', 'location', 'ZIP', 'type'], axis=1)
 
-    t1=datetime.now()
-    list_scatter=list(db.scatter.find({'$and':[
-                                    {"ZIP":int(zipcode)}, 
-                                    {'step':{'$gt':min_step}},
-                                    {'step':{'$lt':max_step}}
-    ]}
-    ))
-    print("mongodb search result for ", zipcode, len(list_scatter),"time spent", datetime.now()-t1)
-    pdf = pd.DataFrame(list_scatter)
+#     t1=datetime.now()
+#     list_scatter=list(db.scatter.find({'$and':[
+#                                     {"ZIP":int(zipcode)}, 
+#                                     {'step':{'$gt':min_step}},
+#                                     {'step':{'$lt':max_step}}
+#     ]}
+#     ))
+#     print("mongodb search result for ", zipcode, len(list_scatter),"time spent", datetime.now()-t1)
+#     pdf = pd.DataFrame(list_scatter)
 
-    pdf["state"] =  pdf["state"].astype("category")
-    #pdf["step"] =  pdf["step"].astype("category")
-    pdf["step"] = pd.to_numeric(pdf["step"], downcast="unsigned")
-    pdf[['x','y']] = pdf[['x','y']].apply(pd.to_numeric, downcast="float")
+#     pdf["state"] =  pdf["state"].astype("category")
+#     #pdf["step"] =  pdf["step"].astype("category")
+#     pdf["step"] = pd.to_numeric(pdf["step"], downcast="unsigned")
+#     pdf[['x','y']] = pdf[['x','y']].apply(pd.to_numeric, downcast="float")
 
-    #datelist = pd.date_range(startdate, enddate).tolist()
-    pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
-    pdf['Date']=pdf['Date'].astype(str)
+#     #datelist = pd.date_range(startdate, enddate).tolist()
+#     pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
+#     pdf['Date']=pdf['Date'].astype(str)
     
 
-    print('scatter data size(before '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
-    pdf = pdf.sample(frac=SAMPLING_PERCENT_1) # (???) similar to geting every 4th rows
-    print('scatter data size(after '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
+#     print('scatter data size(before '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
+#     pdf = pdf.sample(frac=SAMPLING_PERCENT_1) # (???) similar to geting every 4th rows
+#     print('scatter data size(after '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
 
-    #print('scatter memory usage', pdf.info())
-    print('scatter memory size(MB)', sys.getsizeof(pdf)/(1024*1024))
-    pdf = pdf.sort_values(by='step') # should be run after sampling
-    pdf.drop('step',1, inplace=True)
+#     #print('scatter memory usage', pdf.info())
+#     print('scatter memory size(MB)', sys.getsizeof(pdf)/(1024*1024))
+#     pdf = pdf.sort_values(by='step') # should be run after sampling
+#     pdf.drop('step',1, inplace=True)
 
-    return draw_scatter(pdf)
+#     return draw_scatter(pdf, width, height)
 
 """
 load_heatmap using_read_parquet
 """
-def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year):
+def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, width=900, height=750):
     total_steps = enddate - startdate
     step_until_lastday_of_2020=date(2020, 12, 31)-startdate
     min_step=1
@@ -1129,8 +1129,8 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year):
     #pdf = pdf.drop(['zip'], axis=1)
     t1=datetime.now()
     #pdf = pd.read_parquet(os.path.join(path, 'heatmap.parquet'),
-    #pdf = pd.read_parquet(os.path.join(path, 'heatmap.parquet.gzip'),
-    pdf = pd.read_parquet(os.path.join(path, 'heatmap.snappy.parquet'),
+    #pdf = pd.read_parquet(os.path.join(path, 'heatmap.snappy.parquet'),
+    pdf = pd.read_parquet(os.path.join(path, 'heatmap.parquet.gzip'),
                     filters=[('zip','in', [zipcode]), ('step','>=', min_step), ('step', '<=', max_step)],
                     columns=columns_being_used_in_heatmap,
     )
@@ -1157,59 +1157,59 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year):
     pdf = pdf.sort_values(by='step')
     pdf.drop('step',1, inplace=True)
 
-    return draw_heatmap(pdf)
+    return draw_heatmap(pdf, width, height)
 
 """
 load_heatmap using_mongodb
 """
-def load_heatmap_mongodb(zipcode=default_zipcode, year=default_year):
-    total_steps = enddate - startdate
-    step_until_lastday_of_2020=date(2020, 12, 31)-startdate
-    min_step=1
-    max_step=total_steps.days
-    if year=="2020":
-        min_step=1
-        max_step=step_until_lastday_of_2020.days
-    elif year=="2021":
-        min_step=step_until_lastday_of_2020.days + 1
-        max_step=total_steps.days
+# def load_heatmap_mongodb(zipcode=default_zipcode, year=default_year, width=900, height=750):
+#     total_steps = enddate - startdate
+#     step_until_lastday_of_2020=date(2020, 12, 31)-startdate
+#     min_step=1
+#     max_step=total_steps.days
+#     if year=="2020":
+#         min_step=1
+#         max_step=step_until_lastday_of_2020.days
+#     elif year=="2021":
+#         min_step=step_until_lastday_of_2020.days + 1
+#         max_step=total_steps.days
  
-    if zipcode is None:
-        zipcode=default_zipcode
-    print("zipcode:", zipcode)
-    print(year, min_step, max_step)
+#     if zipcode is None:
+#         zipcode=default_zipcode
+#     print("zipcode:", zipcode)
+#     print(year, min_step, max_step)
 
-    t1=datetime.now()
-    #list_heatmap=list(db.heatmap.find({"zip":int(zipcode)}))
-    list_heatmap=list(db.heatmap.find({'$and':[
-                                    {"zip":int(zipcode)}, 
-                                    {'step':{'$gt':min_step}},
-                                    {'step':{'$lt':max_step}}
-    ]}
-    ))
-    print("heatmap mongodbsearch result", len(list_heatmap),"time spent", datetime.now()-t1)
-    pdf = pd.DataFrame(list_heatmap)
+#     t1=datetime.now()
+#     #list_heatmap=list(db.heatmap.find({"zip":int(zipcode)}))
+#     list_heatmap=list(db.heatmap.find({'$and':[
+#                                     {"zip":int(zipcode)}, 
+#                                     {'step':{'$gt':min_step}},
+#                                     {'step':{'$lt':max_step}}
+#     ]}
+#     ))
+#     print("heatmap mongodbsearch result", len(list_heatmap),"time spent", datetime.now()-t1)
+#     pdf = pd.DataFrame(list_heatmap)
 
-    # pdf["step"] =  pdf["step"].astype("category")
-    pdf["step"] = pd.to_numeric(pdf["step"], downcast="unsigned")
-    pdf[['x','y']] = pdf[['x','y']].apply(pd.to_numeric, downcast="float")
-    pdf["z"] = pd.to_numeric(pdf["z"], downcast="unsigned")
+#     # pdf["step"] =  pdf["step"].astype("category")
+#     pdf["step"] = pd.to_numeric(pdf["step"], downcast="unsigned")
+#     pdf[['x','y']] = pdf[['x','y']].apply(pd.to_numeric, downcast="float")
+#     pdf["z"] = pd.to_numeric(pdf["z"], downcast="unsigned")
 
-    #datelist = pd.date_range(startdate, enddate).tolist()
-    pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
-    pdf['Date']=pdf['Date'].astype(str)
+#     #datelist = pd.date_range(startdate, enddate).tolist()
+#     pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
+#     pdf['Date']=pdf['Date'].astype(str)
 
-    print('heatmap data size(before '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
-    pdf = pdf.sample(frac=SAMPLING_PERCENT_2)
-    print('heatmap data size(after '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
-    #print('heatmap memory size', pdf.info())
-    print('heatmap memory usage(MB)', sys.getsizeof(pdf)/(1024*1024))
-    pdf = pdf.sort_values(by='step')
-    pdf.drop('step',1, inplace=True)
+#     print('heatmap data size(before '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
+#     pdf = pdf.sample(frac=SAMPLING_PERCENT_2)
+#     print('heatmap data size(after '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
+#     #print('heatmap memory size', pdf.info())
+#     print('heatmap memory usage(MB)', sys.getsizeof(pdf)/(1024*1024))
+#     pdf = pdf.sort_values(by='step')
+#     pdf.drop('step',1, inplace=True)
     
-    return draw_heatmap(pdf)
+#     return draw_heatmap(pdf, width, height)
 
-def draw_scatter(pdf):
+def draw_scatter(pdf, width, height):
     fig = px.scatter_mapbox(pdf,
                             #title="Scatter_Map",
                             #color='color',
@@ -1224,8 +1224,8 @@ def draw_scatter(pdf):
                             # lat=pdf['y'],
                             # lon=pdf['x'],
                             zoom=9, #default 8 (0-20)
-                            height=750,
-                            width=900,
+                            width=width,
+                            height=height,
                             center=dict(lat=28.03711, lon=-82.46390),
                             #mapbox_style='open-street-map',
                             #mapbox_style='carto-darkmatter',
@@ -1253,7 +1253,7 @@ def draw_scatter(pdf):
     )
     return fig
 
-def draw_heatmap(pdf):
+def draw_heatmap(pdf, width, height):
     fig = px.density_mapbox(pdf,
                             color_continuous_scale='RdYlGn_r',
                             lat=pdf['y'],
@@ -1263,8 +1263,8 @@ def draw_heatmap(pdf):
                             animation_frame='Date',
                             zoom=9,
                             opacity=0.75,
-                            height=750,
-                            width=900,
+                            width=width,
+                            height=height,
                             center=dict(lat=28.03711, lon=-82.46390),
                             # mapbox_style='open-street-map'
                             mapbox_style='stamen-terrain')
@@ -1499,28 +1499,26 @@ def render_content(tab):
             html.P(scatter_map_explain),
             #html.P("(Steps equals Days starting March 1, 2020.)"),
             html.P("Note: For the fast web response, only a fraction of data is being used here. For best result, please contact us. This page uses "+str(SAMPLING_PERCENT_1*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
-            html.H4("Year:", className="control_label", style={'padding': 10, 'flex': 1}),
-            dcc.RadioItems(
-                id="year_scatter",
-                options=[{'label': i, 'value': i} for i in ['2020','2021']],
-                value=default_year,
-                #inline=True,
-                labelStyle={'display': 'inline-block'}
-            ),
-            html.H4("Zip Code: ", className="control_label", style={'padding': 10, 'flex': 1}),
-            dcc.Dropdown(
-                id="zipcode",
-                options=[{'label': i, 'value': i} for i in ZIPS],
-                value=default_zipcode,
-                style=dict(width='40%',
-                    display='inline-block',
-                    verticalAlign="middle"
+            html.Div(children=[
+                html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
+                dcc.RadioItems(
+                    id="year_scatter",
+                    options=[{'label': i, 'value': i} for i in ['2020','2021']],
+                    value=default_year,
+                   style={'display':'inline-block'}
                 ),
-            ),
+                html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
+                dcc.Dropdown(
+                    id="zipcode_scatter",
+                    options=[{'label': i, 'value': i} for i in ZIPS],
+                    value=default_zipcode,
+                    style={'width':'200px', 'display':'inline-block', 'verticalAlign':'middle'}
+                ),
+            ], style={'width': '100%', 'display': 'inline-block'}),
             dcc.Graph(
                 id='graph2',
                 #figure=figure2,
-                figure=load_scatter("33510", "2021")
+                figure=load_scatter("33510", "2021", 900, 750)
             ),
         ])
     elif tab == 'tab3':
@@ -1531,61 +1529,67 @@ def render_content(tab):
             #html.P("(Steps equals Days starting March 1, 2020)"),
             html.P(heat_map_explain),
             html.P("Note: For the fast web response, only a fraction of data is being used here. For best result, please contact us. This page uses "+str(SAMPLING_PERCENT_2*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
-            html.H4("Year:", className="control_label", style={'padding': 10, 'flex': 1}),
-            dcc.RadioItems(
-                id="year_heatmap",
-                options=[{'label': i, 'value': i} for i in ['2020','2021']],
-                value=default_year,
-                #inline=True,
-                labelStyle={'display': 'inline-block'}
-            ),
-            html.H4("Zip Code: ", className="control_label", style={'padding': 10, 'flex': 1}),
-            dcc.Dropdown(
-                id="zipcode_heatmap",
-                options=[{'label': i, 'value': i} for i in ZIPS],
-                value=default_zipcode,
-                style=dict(width='40%',
-                    display='inline-block',
-                    verticalAlign="middle"
+            html.Div(children=[
+                html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
+                dcc.RadioItems(
+                    id="year_heatmap",
+                    options=[{'label': i, 'value': i} for i in ['2020','2021']],
+                    value=default_year,
+                   style={'display':'inline-block'}
                 ),
-            ),
+                html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
+                dcc.Dropdown(
+                    id="zipcode_heatmap",
+                    options=[{'label': i, 'value': i} for i in ZIPS],
+                    value=default_zipcode,
+                    style={'width':'200px', 'display':'inline-block', 'verticalAlign':'middle'}
+                ),
+            ], style={'width': '100%', 'display': 'inline-block'}),
             dcc.Graph(
                 id='graph3',
                 #figure=figure3,
-                figure=load_heatmap("33510", "2021")
+                figure=load_heatmap("33510", "2021", 900, 750)
             )
         ])
     elif tab == 'tab4':
         return html.Div([
             html.Br(),
-            html.H4("Year:", className="control_label", style={'padding': 10, 'flex': 1}),
-            dcc.RadioItems(
-                id="year_for_all",
-                options=[{'label': i, 'value': i} for i in ['2020','2021']],
-                value=default_year,
-                #inline=True,
-                labelStyle={'display': 'inline-block'}
-            ),
-            html.H4("Zip Code: ", className="control_label", style={'padding': 10, 'flex': 1}),
-            dcc.Dropdown(
-                id="zipcode_for_all",
-                options=[{'label': i, 'value': i} for i in ZIPS],
-                value=default_zipcode,
-                style=dict(width='40%',
-                    display='inline-block',
-                    verticalAlign="middle"
+            html.Div(children=[
+                html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
+                dcc.RadioItems(
+                    id="year_for_all",
+                    options=[{'label': i, 'value': i} for i in ['2020','2021']],
+                    value=default_year,
+                   style={'display':'inline-block'}
                 ),
-            ),
-            dcc.Graph(
-                id='graph22',
-                #figure=figure2,
-                figure=load_scatter("33510", "2021")
-            ),
-            dcc.Graph(
-                id='graph33',
-                #figure=figure3,
-                figure=load_heatmap("33510", "2021")
-            )
+                html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
+                dcc.Dropdown(
+                    id="zipcode_for_all",
+                    options=[{'label': i, 'value': i} for i in ZIPS],
+                    value=default_zipcode,
+                    style={'width':'200px', 'display':'inline-block', 'verticalAlign':'middle'}
+                ),
+            ], style={'width': '100%', 'display': 'inline-block'}),
+            # dcc.Graph(
+            #     id='graph22',
+            #     #figure=figure2,
+            #     figure=load_scatter("33510", "2021")
+            # ),
+            # dcc.Graph(
+            #     id='graph33',
+            #     #figure=figure3,
+            #     figure=load_heatmap("33510", "2021")
+            # ),
+            html.Div(children=[
+                html.Div(
+                    dcc.Graph(
+                        figure= load_scatter("33510", "2021", width=750, height=600),
+                    ), style={'display': 'inline-block'}),
+                html.Div(
+                    dcc.Graph(
+                        figure=load_heatmap("33510", "2021", width=750, height=600),
+                    ), style={'display': 'inline-block'})
+            ], style={'width': '100%', 'display': 'inline-block'})            
         ])
 
 @app.callback(Output("graph1", 'figure'), Input("filter_type", "value"))
@@ -1594,18 +1598,18 @@ def update_SEIR(filter_type):
     figure1 = load_SEIR(filter_type)
     return figure1
 
-@app.callback(Output("graph2", 'figure'), Input("zipcode", "value"), Input("year_scatter", "value"))
+@app.callback(Output("graph2", 'figure'), Input("zipcode_scatter", "value"), Input("year_scatter", "value"))
 @cache.memoize(timeout=timeout)  # in seconds
-def update_scatter_by_zipcode(zipcode, year_scatter):
+def update_scatter_by_zipcode(zipcode_scatter, year_scatter):
     time.sleep(1)
-    figure2 = load_scatter(zipcode, year_scatter)
+    figure2 = load_scatter(zipcode_scatter, year_scatter, width=900, height=750)
     return figure2
 
 @app.callback(Output("graph3", 'figure'), Input("zipcode_heatmap", "value"), Input("year_heatmap", "value"))
 @cache.memoize(timeout=timeout)  # in seconds
 def update_heatmap_by_zipcode(zipcode_heatmap, year_heatmap):
     time.sleep(1)
-    figure3 = load_heatmap(zipcode_heatmap, year_heatmap)
+    figure3 = load_heatmap(zipcode_heatmap, year_heatmap, width=900, height=750)
     return figure3
 
 @app.callback([Output("graph22", 'figure'), Output("graph33", 'figure')],
@@ -1613,8 +1617,8 @@ def update_heatmap_by_zipcode(zipcode_heatmap, year_heatmap):
 @cache.memoize(timeout=timeout)  # in seconds
 def update_scatter_and_heatmap(zipcode_for_all, year_for_all):
     time.sleep(1)
-    figure22 = load_scatter(zipcode_for_all, year_for_all)
-    figure33 = load_heatmap(zipcode_for_all, year_for_all)
+    figure22 = load_scatter(zipcode_for_all, year_for_all, width=750, height=600)
+    figure33 = load_heatmap(zipcode_for_all, year_for_all, width=750, height=600)
     return figure22, figure33
 
 if __name__ == '__main__':
