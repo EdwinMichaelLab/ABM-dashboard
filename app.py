@@ -31,11 +31,14 @@ import time
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_percentage_error
 #import vaex
+
 import pymongo
 from pymongo import MongoClient
 client = MongoClient()
 print(client)
 db = client["abm"]
+
+from flask_caching import Cache
 
 ZIPS = ['33510', '33511', '33527', '33534', '33547', '33548', '33549', '33556', '33558', '33559', '33563', '33565',
             '33566', '33567', '33569', '33570', '33572', '33573', '33578', '33579', '33584', '33592', '33594', '33596',
@@ -1016,6 +1019,8 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year):
 
     #pdf=pdf.drop(['pid', 'location', 'ZIP', 'type'], axis=1)
     t1=datetime.now()
+    #pdf = pd.read_parquet(os.path.join(path, 'scatter.parquet'),
+    #pdf = pd.read_parquet(os.path.join(path, 'scatter.snappy.parquet'),
     pdf = pd.read_parquet(os.path.join(path, 'scatter.parquet.gzip'),
                     filters=[('ZIP','in', [zipcode]), ('step','>=', min_step), ('step', '<=', max_step)],
                     columns=columns_being_used_in_scatter,
@@ -1242,7 +1247,9 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year):
     #pdf = dd.read_csv(os.path.join(path, 'heatmap.csv'))
     #pdf = pdf.drop(['zip'], axis=1)
     t1=datetime.now()
-    pdf = pd.read_parquet(os.path.join(path, 'heatmap.parquet.gzip'),
+    #pdf = pd.read_parquet(os.path.join(path, 'heatmap.parquet'),
+    #pdf = pd.read_parquet(os.path.join(path, 'heatmap.parquet.gzip'),
+    pdf = pd.read_parquet(os.path.join(path, 'heatmap.snappy.parquet'),
                     filters=[('zip','in', [zipcode]), ('step','>=', min_step), ('step', '<=', max_step)],
                     columns=columns_being_used_in_heatmap,
     )
@@ -1386,6 +1393,12 @@ tab_selected_style = {
 
 
 app = dash.Dash(__name__, title="COVID-19 Dashboard powered by EDEN (USF-COPH-Dr.Edwin Michael Lab)")
+cache = Cache(app.server, config={
+    'CACHE_TYPE': 'redis',
+    'CACHE_REDIS_URL': 'redis://localhost:6379'
+})
+app.config.suppress_callback_exceptions = True
+timeout=2*60*60
 
 app.layout = html.Div(children=[
     html.Div(
@@ -1628,19 +1641,21 @@ def render_content(tab):
             )
         ])
 
-@app.callback(
-    Output("graph1", 'figure'), Input("filter_type", "value"))
+@app.callback(Output("graph1", 'figure'), Input("filter_type", "value"))
+@cache.memoize(timeout=timeout)  # in seconds
 def update_SEIR(filter_type):
     figure1 = load_SEIR(filter_type)
     return figure1
 
 @app.callback(Output("graph2", 'figure'), Input("zipcode", "value"), Input("year_scatter", "value"))
+@cache.memoize(timeout=timeout)  # in seconds
 def update_scatter_by_zipcode(zipcode, year_scatter):
     time.sleep(1)
     figure2 = load_scatter(zipcode, year_scatter)
     return figure2
 
 @app.callback(Output("graph3", 'figure'), Input("zipcode_heatmap", "value"), Input("year_heatmap", "value"))
+@cache.memoize(timeout=timeout)  # in seconds
 def update_heatmap_by_zipcode(zipcode_heatmap, year_heatmap):
     time.sleep(1)
     figure3 = load_heatmap(zipcode_heatmap, year_heatmap)
