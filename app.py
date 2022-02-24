@@ -46,6 +46,56 @@ ZIPS = ['33510', '33511', '33527', '33534', '33547', '33548', '33549', '33556', 
             '33614', '33615', '33616', '33617', '33618', '33619', '33624', '33625', '33626', '33629', '33634', '33635',
             '33637', '33647']
 
+ZIPS_centers={ '33510':[27.96, -82.30], 
+                '33511':[27.90, -82.30],
+                '33527':[27.97, -82.22],
+                '33534':[27.83, -82.38],
+                '33547':[27.8, -82.1],
+                '33548':[28.15, -82.48],
+                '33549':[28.14, -82.45],
+                '33556':[28.2, -82.6],
+                '33558':[28.16, -82.51],
+                '33559':[28.16, -82.40],
+                '33563':[28.02, -82.13],
+                '33565':[28.10, -82.15],
+                '33566':[27.99, -82.13],
+                '33567':[27.91, -82.12],
+                '33569':[27.85, -82.29],
+                '33570':[27.70, -82.47],
+                '33572':[27.77, -82.40],
+                '33573':[27.73, -82.36],
+                '33578':[27.84, -82.35],
+                '33579':[27.80, -82.28],
+                '33584':[28.00, -82.29],
+                '33592':[28.10, -82.28],
+                '33594':[27.94, -82.24],
+                '33596':[27.89, -82.23],
+                '33598':[27.7, -82.3],
+                '33602':[27.95, -82.46],
+                '33603':[27.99, -82.46],
+                '33604':[28.01, -82.45],
+                '33605':[27.94, -82.43],
+                '33606':[27.93, -82.46],
+                '33607':[27.96, -82.54],
+                '33609':[27.94, -82.52],
+                '33610':[28.00, -82.38],
+                '33611':[27.89, -82.51],
+                '33612':[28.05, -82.45],
+                '33613':[28.09, -82.45],
+                '33614':[28.01, -82.50],
+                '33615':[28.00, -82.58],
+                '33616':[27.86, -82.53],
+                '33617':[28.04, -82.39],
+                '33618':[28.08, -82.50],
+                '33619':[27.90, -82.38],
+                '33624':[28.08, -82.52],
+                '33625':[28.07, -82.56],
+                '33626':[28.06, -82.61],
+                '33629':[27.92, -82.51],
+                '33634':[28.00, -82.54],
+                '33635':[28.02, -82.61],
+                '33637':[28.05, -82.36],
+                '33647':[28.12, -82.35]}
 MAX_ROWS=10000000
 path = os.path.join('..', 'EDEN-ABM-Simulator', 'SimulationEngine', 'output', '2021-12-29', 'run4')
 #path = os.path.join('..', 'EDEN-ABM-Simulator-new', 'SimulationEngine', 'output', '2021-12-29', 'run4')
@@ -1038,7 +1088,7 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year, width=
     pdf = pdf.sort_values(by='step') # should be run after sampling
     pdf.drop('step',axis=1, inplace=True)
 
-    return draw_scatter(pdf, width, height)
+    return draw_scatter(pdf, zipcode, width, height)
 
 """
 load_scatter via_mongodb
@@ -1098,7 +1148,7 @@ load_scatter via_mongodb
 #     pdf = pdf.sort_values(by='step') # should be run after sampling
 #     pdf.drop('step',axis=1, inplace=True)
 
-#     return draw_scatter(pdf, width, height)
+#     return draw_scatter(pdf, zipcode, width, height)
 
 """
 load_heatmap using_read_parquet
@@ -1162,7 +1212,7 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, width=
     pdf = pdf.sort_values(by='step')
     pdf.drop('step',axis=1, inplace=True)
 
-    return draw_heatmap(pdf, width, height)
+    return draw_heatmap(pdf, zipcode, width, height)
 
 """
 load_heatmap using_mongodb
@@ -1212,12 +1262,21 @@ load_heatmap using_mongodb
 #     pdf = pdf.sort_values(by='step')
 #     pdf.drop('step',axis=1, inplace=True)
     
-#     return draw_heatmap(pdf, width, height)
+#     return draw_heatmap(pdf, zipcode, width, height)
 
-def draw_scatter(pdf, width, height):
+def draw_scatter(pdf, zipcode, width, height):
     global scatter_size
     scatter_size=pdf.size
     print("scatter_size in draw", scatter_size)
+
+    center_lat = 28.03711
+    center_lon = -82.46390
+    zoom_level=9
+    if ZIPS_centers[zipcode]:
+        center_lat=ZIPS_centers[zipcode][0]
+        center_lon=ZIPS_centers[zipcode][1]
+        zoom_level=11
+    print("centers", center_lat, center_lon, "zoom", zoom_level)
     fig = px.scatter_mapbox(pdf,
                             #title="Scatter_Map",
                             #color='color',
@@ -1229,12 +1288,11 @@ def draw_scatter(pdf, width, height):
                             color_discrete_map=legend_map,
                             lat='y',
                             lon='x',                            
-                            # lat=pdf['y'],
-                            # lon=pdf['x'],
-                            zoom=9, #default 8 (0-20)
+
+                            zoom=zoom_level, #default 8 (0-20)
                             width=width,
                             height=height,
-                            center=dict(lat=28.03711, lon=-82.46390),
+                            center=dict(lat=center_lat, lon=center_lon),
                             #mapbox_style='open-street-map',
                             #mapbox_style='carto-darkmatter',
                             mapbox_style='carto-positron',
@@ -1261,10 +1319,18 @@ def draw_scatter(pdf, width, height):
     )
     return fig
 
-def draw_heatmap(pdf, width, height):
+def draw_heatmap(pdf, zipcode, width, height):
     global heatmap_size
     heatmap_size=pdf.size   
-    print("heatmap size in draw=", heatmap_size) 
+    print("heatmap size in draw=", heatmap_size)
+    center_lat = 28.03711
+    center_lon = -82.46390
+    zoom_level=9
+    if ZIPS_centers[zipcode]:
+        center_lat=ZIPS_centers[zipcode][0]
+        center_lon=ZIPS_centers[zipcode][1]
+        zoom_level=11
+    print("centers", center_lat, center_lon, "zoom", zoom_level)
     fig = px.density_mapbox(pdf,
                             color_continuous_scale='RdYlGn_r',
                             lat=pdf['y'],
@@ -1272,11 +1338,11 @@ def draw_heatmap(pdf, width, height):
                             z=pdf['z'],
                             #animation_frame=pdf['step'],
                             animation_frame='Date',
-                            zoom=9,
                             opacity=0.75,
+                            zoom=zoom_level, #default 8 (0-20)
                             width=width,
                             height=height,
-                            center=dict(lat=28.03711, lon=-82.46390),
+                            center=dict(lat=center_lat, lon=center_lon),
                             # mapbox_style='open-street-map'
                             mapbox_style='stamen-terrain')
     return fig
@@ -1438,7 +1504,7 @@ app.layout = html.Div(children=[
                                 dcc.Tab(label='COVID-19 Time Plots', value='tab1', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='COVID-19 Spatial Spread', value='tab2', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='COVID-19 Heatmap', value='tab3', style = tab_style, selected_style = tab_selected_style),
-                                dcc.Tab(label='COVID-19 Spatial Spread and Heatmap', value='tab4', style = tab_style, selected_style = tab_selected_style),
+                                # dcc.Tab(label='COVID-19 Spatial Spread and Heatmap', value='tab4', style = tab_style, selected_style = tab_selected_style),
                             ], style = tabs_styles),
                             html.Div(
                                 id='tabs-contentgraph'),
