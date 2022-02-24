@@ -58,11 +58,11 @@ SF2 = 5
 
 # scatter
 #SKIP_EVERY_NTH_1=100 # best at 2
-SAMPLING_PERCENT_1=0.2 # default 0.25
+SAMPLING_PERCENT_1=0.1 # default 0.25
 
 # heatmap
 #SKIP_EVERY_NTH_2=10 # best at 2
-SAMPLING_PERCENT_2=0.25 # default 0.5
+SAMPLING_PERCENT_2=0.2 # default 0.5
 
 startdate = date(2020, 3, 1)
 enddate = date(2021, 8, 31)
@@ -1215,7 +1215,8 @@ load_heatmap using_mongodb
 
 def draw_scatter(pdf, width, height):
     global scatter_size
-    scatter_size=pdf.size    
+    scatter_size=pdf.size
+    print("scatter_size in draw", scatter_size)
     fig = px.scatter_mapbox(pdf,
                             #title="Scatter_Map",
                             #color='color',
@@ -1261,7 +1262,8 @@ def draw_scatter(pdf, width, height):
 
 def draw_heatmap(pdf, width, height):
     global heatmap_size
-    heatmap_size=pdf.size    
+    heatmap_size=pdf.size   
+    print("heatmap size in draw=", heatmap_size) 
     fig = px.density_mapbox(pdf,
                             color_continuous_scale='RdYlGn_r',
                             lat=pdf['y'],
@@ -1463,10 +1465,17 @@ These inviduals and their spread over time is represented by the spatial scatter
 
 heat_map_explain="The bar to the right of the map is a legend, assigning a color on a gradient based on the number of cases within a zip code. The zip code areas with the highest number of cases will be red and the zip code areas with the lowest number of cases will be dark green. A z-value is computed based on the aggerate cases at a certain location and represents the heat of that location. A higher z-value represents higher density of the cases at a given location."
 
-@app.callback(Output('tabs-contentgraph', 'children'), Input('tabsgraph', 'value'))
+@app.callback(Output('tabs-contentgraph', 'children'), 
+    Input('tabsgraph', 'value'))
 #    , prevent_initial_call=True) # first page... if uncommented, it will not be displayed
 @cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
 def render_content(tab):
+    global scatter_size
+    scatter_size=scatter_size
+    global heatmap_size
+    heatmap_size=heatmap_size
+    print("scatter_size", scatter_size, "heatmap_size", heatmap_size)
+
     if tab=='moretab':
         return html.Div([
             html.H3('(Except from ongoing paper)'),
@@ -1506,12 +1515,14 @@ def render_content(tab):
             )
         ])
     elif tab == 'tab2':
-        return html.Div([      
+        fig=load_scatter("33510", "2021", 900, 750)
+        return html.Div(id="tab2", children=[
             html.Br(),
             html.H2("Spatial plot of individual daily case emergence and spread"),
             html.P(scatter_map_explain),
             #html.P("(Steps equals Days starting March 1, 2020.)"),
-            html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_1*100)+" % (data size="+str(scatter_size)+")", style={'textAlign': 'center', 'color':'orange'}),
+            html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_1*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
+            html.Div(id="scatter_size_num", children=[html.P("(Data size="+str(scatter_size)+")", style={'textAlign': 'center', 'color':'orange'})]),
             html.Div(children=[
                 html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
                 dcc.RadioItems(
@@ -1531,17 +1542,19 @@ def render_content(tab):
             dcc.Graph(
                 id="graph2",
                 #figure=figure2,
-                figure=load_scatter("33510", "2021", 900, 750)
+                figure=fig
             ),
         ])
     elif tab == 'tab3':
-        return html.Div([
+        fig=load_heatmap("33510", "2021", 900, 750)
+        return html.Div(id="tab3", children=[
             html.Br(),
             html.H2("Heatmap of the density of daily infectious cases"),
             #html.P("(Z values represents the number of cases within the same zipcode area.)"),
             #html.P("(Steps equals Days starting March 1, 2020)"),
             html.P(heat_map_explain),
-            html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_2*100)+" % (data size="+str(heatmap_size)+")", style={'textAlign': 'center', 'color':'orange'}),
+            html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_2*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
+            html.Div(id="heatmap_size_num", children=[html.P("(Data size="+str(heatmap_size)+")", style={'textAlign': 'center', 'color':'orange'})]),
             html.Div(children=[
                 html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
                 dcc.RadioItems(
@@ -1561,11 +1574,13 @@ def render_content(tab):
             dcc.Graph(
                 id="graph3",
                 #figure=figure3,
-                figure=load_heatmap("33510", "2021", 900, 750)
+                figure=fig
             )
         ])
     elif tab == 'tab4':
-        return html.Div([
+        fig1=load_scatter("33510", "2021", width=750, height=600)
+        fig2=load_heatmap("33510", "2021", width=750, height=600)
+        return html.Div(id="tab4", children=[
             html.Br(),
             html.Div(children=[
                 html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
@@ -1597,12 +1612,12 @@ def render_content(tab):
                 html.Div(
                     dcc.Graph(
                         id='graph22',
-                        figure= load_scatter("33510", "2021", width=750, height=600),
+                        figure= fig1,
                     ), style={'display': 'inline-block'}),
                 html.Div(
                     dcc.Graph(
                         id='graph33',
-                        figure=load_heatmap("33510", "2021", width=750, height=600),
+                        figure=fig2,
                     ), style={'display': 'inline-block'})
             ], style={'width': '100%', 'display': 'inline-block'})            
         ])
@@ -1613,21 +1628,23 @@ def render_content(tab):
 def update_SEIR(filter_type):
     return load_SEIR(filter_type)
 
-@app.callback(Output("graph2", 'figure'),
+@app.callback(Output("graph2", 'figure'), Output("scatter_size_num", "children"),
             [Input("zipcode_scatter", "value"), Input("year_scatter", "value")],
             prevent_initial_call=True)
 @cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
 def update_scatter_by_zipcode(zipcode_scatter, year_scatter):
+    global scatter_size
     time.sleep(1)
-    return load_scatter(zipcode_scatter, year_scatter, width=900, height=750)
+    return load_scatter(zipcode_scatter, year_scatter, width=900, height=750), html.P("(Data size="+str(scatter_size)+")")
 
-@app.callback(Output("graph3", 'figure'),
+@app.callback(Output("graph3", 'figure'), Output("heatmap_size_num", "children"),
             [Input("zipcode_heatmap", "value"),Input("year_heatmap", "value")],
             prevent_initial_call=True)
 @cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
 def update_heatmap_by_zipcode(zipcode_heatmap, year_heatmap):
+    global heatmap_size
     time.sleep(1)
-    return load_heatmap(zipcode_heatmap, year_heatmap, width=900, height=750)
+    return load_heatmap(zipcode_heatmap, year_heatmap, width=900, height=750), html.P("(Data size="+str(heatmap_size)+")")
 
 @app.callback([Output("graph22", 'figure'), Output("graph33", 'figure')],
             [Input("zipcode_for_all", "value"), Input("year_for_all", "value")],
