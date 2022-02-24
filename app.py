@@ -109,11 +109,11 @@ SF2 = 5
 
 # scatter
 #SKIP_EVERY_NTH_1=100 # best at 2
-SAMPLING_PERCENT_1=0.2 # default 0.25
+SAMPLING_PERCENT_1=0.5 # default 0.25
 
 # heatmap
 #SKIP_EVERY_NTH_2=10 # best at 2
-SAMPLING_PERCENT_2=0.25 # default 0.5
+SAMPLING_PERCENT_2=0.5 # default 0.5
 
 startdate = date(2020, 3, 1)
 enddate = date(2021, 8, 31)
@@ -1031,10 +1031,10 @@ load_scatter using_read_parquet
 def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year, width=900, height=750):
     total_steps = enddate - startdate
     step_until_lastday_of_2020=date(2020, 12, 31)-startdate
-    min_step=1
+    min_step=0
     max_step=total_steps.days
     if year=="2020":
-        min_step=1
+        min_step=0
         max_step=step_until_lastday_of_2020.days
     elif year=="2021":
         min_step=step_until_lastday_of_2020.days + 1
@@ -1079,9 +1079,10 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year, width=
     pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
     pdf['Date']=pdf['Date'].astype(str)
     
-    print('scatter data size(before '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
-    pdf = pdf.sample(frac=SAMPLING_PERCENT_1) # (???) similar to geting every 4th rows
-    print('scatter data size(after '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
+    # print('scatter data size(before '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
+    # pdf = pdf.sample(frac=SAMPLING_PERCENT_1) # (???) similar to geting every 4th rows
+    # print('scatter data size(after '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
+    print("unique states", pd.unique(pdf["state"]))
 
     #print('scatter memory usage', pdf.info())
     print('scatter memory size(MB)', sys.getsizeof(pdf)/(1024*1024))
@@ -1096,10 +1097,10 @@ load_scatter via_mongodb
 # def load_scatter_mongodb(zipcode=default_zipcode, year=default_year, width=900, height=750):
 #     total_steps = enddate - startdate
 #     step_until_lastday_of_2020=date(2020, 12, 31)-startdate
-#     min_step=1
+#     min_step=0
 #     max_step=total_steps.days
 #     if year=="2020":
-#         min_step=1
+#         min_step=0
 #         max_step=step_until_lastday_of_2020.days
 #     elif year=="2021":
 #         min_step=step_until_lastday_of_2020.days + 1
@@ -1156,10 +1157,10 @@ load_heatmap using_read_parquet
 def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, width=900, height=750):
     total_steps = enddate - startdate
     step_until_lastday_of_2020=date(2020, 12, 31)-startdate
-    min_step=1
+    min_step=0
     max_step=total_steps.days
     if year=="2020":
-        min_step=1
+        min_step=0
         max_step=step_until_lastday_of_2020.days
     elif year=="2021":
         min_step=step_until_lastday_of_2020.days + 1
@@ -1220,10 +1221,10 @@ load_heatmap using_mongodb
 # def load_heatmap_mongodb(zipcode=default_zipcode, year=default_year, width=900, height=750):
 #     total_steps = enddate - startdate
 #     step_until_lastday_of_2020=date(2020, 12, 31)-startdate
-#     min_step=1
+#     min_step=0
 #     max_step=total_steps.days
 #     if year=="2020":
-#         min_step=1
+#         min_step=0
 #         max_step=step_until_lastday_of_2020.days
 #     elif year=="2021":
 #         min_step=step_until_lastday_of_2020.days + 1
