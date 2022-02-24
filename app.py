@@ -1318,16 +1318,18 @@ tab_selected_style = {
 }
 
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(__name__, 
-    title="COVID-19 Dashboard powered by EDEN (USF-COPH-Dr.Edwin Michael Lab)",)
+app = dash.Dash(__name__, title="COVID-19 Dashboard powered by EDEN (USF-COPH-Dr.Edwin Michael Lab)")
 #    external_stylesheets=external_stylesheets)
+
+#app.config.suppress_callback_exceptions = True
+app.prevent_initial_callbacks=True
+
 cache = Cache(app.server, config={
     'CACHE_TYPE': 'redis', # need local redis server installation using docker(windows) or apt install(linux-ubuntu)
     'CACHE_REDIS_URL': 'redis://localhost:6379'
 })
-app.config.suppress_callback_exceptions = True
 
-timeout=2*60*60
+CACHE_TIMEOUT=24*60*60
 
 app.layout = html.Div(children=[
     html.Div(
@@ -1435,16 +1437,17 @@ app.layout = html.Div(children=[
                                 dcc.Tab(label='COVID-19 Heatmap', value='tab3', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='COVID-19 Spatial Spread and Heatmap', value='tab4', style = tab_style, selected_style = tab_selected_style),
                             ], style = tabs_styles),
-                            html.Div(id='tabs-contentgraph'),
                             html.Div(
-                                className="footer",
-                                children=[
-                                    html.P('Paper: "An Agent-based City Scale Digital Twin (EDEN) for Pandemic Analytics and Scenario Planning, Imran Mahmood et al. (in publishing)"'),
-                                    html.H3(children='* Simulation results are provided by Dr. Edwin Michael Lab, USF College of Public Health *'),
-                                    html.H4('Team members: Edwin Michael (PI), Imran Mahmood Qureshi Hashmi, Yilian Alonso Otano, Soo I. Kim, Shakir Bilal'),
-                                    #html.Img(src=app.get_asset_url('usf-logo-white-color.svg'), style={'width':'20%'})
-                                ]
-                            ),                              
+                                id='tabs-contentgraph'),
+                                html.Div(
+                                    className="footer",
+                                    children=[
+                                        html.P('Paper: "An Agent-based City Scale Digital Twin (EDEN) for Pandemic Analytics and Scenario Planning, Imran Mahmood et al. (in publishing)"'),
+                                        html.H3(children='* Simulation results are provided by Dr. Edwin Michael Lab, USF College of Public Health *'),
+                                        html.H4('Team members: Edwin Michael (PI), Imran Mahmood Qureshi Hashmi, Yilian Alonso Otano, Soo I. Kim, Shakir Bilal'),
+                                        #html.Img(src=app.get_asset_url('usf-logo-white-color.svg'), style={'width':'20%'})
+                                    ]
+                                ),                              
                 ]
             ),
 
@@ -1461,7 +1464,8 @@ These inviduals and their spread over time is represented by the spatial scatter
 heat_map_explain="The bar to the right of the map is a legend, assigning a color on a gradient based on the number of cases within a zip code. The zip code areas with the highest number of cases will be red and the zip code areas with the lowest number of cases will be dark green. A z-value is computed based on the aggerate cases at a certain location and represents the heat of that location. A higher z-value represents higher density of the cases at a given location."
 
 @app.callback(Output('tabs-contentgraph', 'children'), Input('tabsgraph', 'value'))
-@cache.memoize(timeout=timeout)  # in seconds
+#    , prevent_initial_call=True) # first page... if uncommented, it will not be displayed
+@cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
 def render_content(tab):
     if tab=='moretab':
         return html.Div([
@@ -1603,34 +1607,42 @@ def render_content(tab):
             ], style={'width': '100%', 'display': 'inline-block'})            
         ])
 
-@app.callback(Output("graph1", 'figure'), Input("filter_type", "value"))
-@cache.memoize(timeout=timeout)  # in seconds
+@app.callback(Output("graph1", 'figure'), Input("filter_type", "value"),
+            prevent_initial_call=True)
+@cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
 def update_SEIR(filter_type):
     return load_SEIR(filter_type)
 
 @app.callback(Output("graph2", 'figure'),
-            [Input("zipcode_scatter", "value"), Input("year_scatter", "value")])
-@cache.memoize(timeout=timeout)  # in seconds
+            [Input("zipcode_scatter", "value"), Input("year_scatter", "value")],
+            prevent_initial_call=True)
+@cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
 def update_scatter_by_zipcode(zipcode_scatter, year_scatter):
     time.sleep(1)
     return load_scatter(zipcode_scatter, year_scatter, width=900, height=750)
 
 @app.callback(Output("graph3", 'figure'),
-            [Input("zipcode_heatmap", "value"), Input("year_heatmap", "value")])
-@cache.memoize(timeout=timeout)  # in seconds
+            [Input("zipcode_heatmap", "value"),Input("year_heatmap", "value")],
+            prevent_initial_call=True)
+@cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
 def update_heatmap_by_zipcode(zipcode_heatmap, year_heatmap):
     time.sleep(1)
     return load_heatmap(zipcode_heatmap, year_heatmap, width=900, height=750)
 
 @app.callback([Output("graph22", 'figure'), Output("graph33", 'figure')],
-            [Input("zipcode_for_all", "value"), Input("year_for_all", "value")])
-@cache.memoize(timeout=timeout)  # in seconds
+            [Input("zipcode_for_all", "value"), Input("year_for_all", "value")],
+            prevent_initial_call=True)
+@cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
 def update_scatter_and_heatmap(zipcode_for_all, year_for_all):
     time.sleep(1)
-    figure22 = load_scatter(zipcode_for_all, year_for_all, width=750, height=600)
-    figure33 = load_heatmap(zipcode_for_all, year_for_all, width=750, height=600)
+    figure22 = load_scatter(zipcode_for_all, year_for_all, width=600, height=600)
+    figure33 = load_heatmap(zipcode_for_all, year_for_all, width=600, height=600)
     return figure22, figure33
 
 if __name__ == '__main__':
-    app.run_server(debug=False,host="0.0.0.0",port=8050)
+    app.run_server(debug=False,
+        #use_reloader=False,
+        threaded=True,
+        host="0.0.0.0",
+        port=8050)
 
