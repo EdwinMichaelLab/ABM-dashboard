@@ -48,6 +48,7 @@ ZIPS = ['33510', '33511', '33527', '33534', '33547', '33548', '33549', '33556', 
 
 MAX_ROWS=10000000
 path = os.path.join('..', 'EDEN-ABM-Simulator', 'SimulationEngine', 'output', '2021-12-29', 'run4')
+#path = os.path.join('..', 'EDEN-ABM-Simulator-new', 'SimulationEngine', 'output', '2021-12-29', 'run4')
 print(path)
 
 SF1 = 22
@@ -58,11 +59,11 @@ SF2 = 5
 
 # scatter
 #SKIP_EVERY_NTH_1=100 # best at 2
-SAMPLING_PERCENT_1=0.1 # default 0.25
+SAMPLING_PERCENT_1=0.2 # default 0.25
 
 # heatmap
 #SKIP_EVERY_NTH_2=10 # best at 2
-SAMPLING_PERCENT_2=0.2 # default 0.5
+SAMPLING_PERCENT_2=0.25 # default 0.5
 
 startdate = date(2020, 3, 1)
 enddate = date(2021, 8, 31)
@@ -1511,7 +1512,10 @@ def render_content(tab):
             dcc.Graph(
                 id='graph1',
                 #figure=figure1,
-                figure=load_SEIR('All cases')
+                figure=load_SEIR('All cases'),
+                config={
+                    'displayModeBar': False
+                }                
             )
         ])
     elif tab == 'tab2':
@@ -1542,7 +1546,10 @@ def render_content(tab):
             dcc.Graph(
                 id="graph2",
                 #figure=figure2,
-                figure=fig
+                figure=fig,
+                config={
+                    'displayModeBar': False
+                }                
             ),
         ])
     elif tab == 'tab3':
@@ -1574,7 +1581,10 @@ def render_content(tab):
             dcc.Graph(
                 id="graph3",
                 #figure=figure3,
-                figure=fig
+                figure=fig,
+                config={
+                    'displayModeBar': False
+                }                
             )
         ])
     elif tab == 'tab4':
@@ -1613,11 +1623,17 @@ def render_content(tab):
                     dcc.Graph(
                         id='graph22',
                         figure= fig1,
+                        config={
+                            'displayModeBar': False
+                        }                
                     ), style={'display': 'inline-block'}),
                 html.Div(
                     dcc.Graph(
                         id='graph33',
                         figure=fig2,
+                        config={
+                            'displayModeBar': False
+                        }                
                     ), style={'display': 'inline-block'})
             ], style={'width': '100%', 'display': 'inline-block'})            
         ])
