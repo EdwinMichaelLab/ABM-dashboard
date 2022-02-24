@@ -1082,7 +1082,7 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year, width=
     # print('scatter data size(before '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
     # pdf = pdf.sample(frac=SAMPLING_PERCENT_1) # (???) similar to geting every 4th rows
     # print('scatter data size(after '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
-    print("unique states", pd.unique(pdf["state"]))
+    #print("unique states", pd.unique(pdf["state"]))
 
     #print('scatter memory usage', pdf.info())
     print('scatter memory size(MB)', sys.getsizeof(pdf)/(1024*1024))
@@ -1140,9 +1140,9 @@ load_scatter via_mongodb
 #     pdf['Date']=pdf['Date'].astype(str)
     
 
-#     print('scatter data size(before '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
-#     pdf = pdf.sample(frac=SAMPLING_PERCENT_1) # (???) similar to geting every 4th rows
-#     print('scatter data size(after '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
+#     # print('scatter data size(before '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
+#     # pdf = pdf.sample(frac=SAMPLING_PERCENT_1) # (???) similar to geting every 4th rows
+#     # print('scatter data size(after '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
 
 #     #print('scatter memory usage', pdf.info())
 #     print('scatter memory size(MB)', sys.getsizeof(pdf)/(1024*1024))
@@ -1204,9 +1204,9 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, width=
     #list_heatmap=list(heatmap.find({}))[::10]
     #print(len(list_heatmap))
     #pdf = pd.DataFrame(list_heatmap)
-    print('heatmap data size(before '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
-    pdf = pdf.sample(frac=SAMPLING_PERCENT_2)
-    print('heatmap data size(after '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
+    # print('heatmap data size(before '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
+    # pdf = pdf.sample(frac=SAMPLING_PERCENT_2)
+    # print('heatmap data size(after '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
 
     #print('heatmap memory size', pdf.info())
     print('heatmap memory usage(MB)', sys.getsizeof(pdf)/(1024*1024))
@@ -1255,9 +1255,10 @@ load_heatmap using_mongodb
 #     pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
 #     pdf['Date']=pdf['Date'].astype(str)
 
-#     print('heatmap data size(before '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
-#     pdf = pdf.sample(frac=SAMPLING_PERCENT_2)
-#     print('heatmap data size(after '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
+#     # print('heatmap data size(before '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
+#     # pdf = pdf.sample(frac=SAMPLING_PERCENT_2)
+#     # print('heatmap data size(after '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
+    
 #     #print('heatmap memory size', pdf.info())
 #     print('heatmap memory usage(MB)', sys.getsizeof(pdf)/(1024*1024))
 #     pdf = pdf.sort_values(by='step')
@@ -1276,7 +1277,7 @@ def draw_scatter(pdf, zipcode, width, height):
     if ZIPS_centers[zipcode]:
         center_lat=ZIPS_centers[zipcode][0]
         center_lon=ZIPS_centers[zipcode][1]
-        zoom_level=11
+        zoom_level=12
     print("centers", center_lat, center_lon, "zoom", zoom_level)
     fig = px.scatter_mapbox(pdf,
                             #title="Scatter_Map",
@@ -1289,7 +1290,6 @@ def draw_scatter(pdf, zipcode, width, height):
                             color_discrete_map=legend_map,
                             lat='y',
                             lon='x',                            
-
                             zoom=zoom_level, #default 8 (0-20)
                             width=width,
                             height=height,
@@ -1330,7 +1330,7 @@ def draw_heatmap(pdf, zipcode, width, height):
     if ZIPS_centers[zipcode]:
         center_lat=ZIPS_centers[zipcode][0]
         center_lon=ZIPS_centers[zipcode][1]
-        zoom_level=11
+        zoom_level=12
     print("centers", center_lat, center_lon, "zoom", zoom_level)
     fig = px.density_mapbox(pdf,
                             color_continuous_scale='RdYlGn_r',
@@ -1592,7 +1592,7 @@ def render_content(tab):
             html.H2("Spatial plot of individual daily case emergence and spread"),
             html.P(scatter_map_explain),
             #html.P("(Steps equals Days starting March 1, 2020.)"),
-            html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_1*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
+            #html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_1*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
             html.Div(id="scatter_size_num", children=[html.P("(Data size="+str(scatter_size)+")", style={'textAlign': 'center', 'color':'orange'})]),
             html.Div(children=[
                 html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
@@ -1627,7 +1627,7 @@ def render_content(tab):
             #html.P("(Z values represents the number of cases within the same zipcode area.)"),
             #html.P("(Steps equals Days starting March 1, 2020)"),
             html.P(heat_map_explain),
-            html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_2*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
+            #html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_2*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
             html.Div(id="heatmap_size_num", children=[html.P("(Data size="+str(heatmap_size)+")", style={'textAlign': 'center', 'color':'orange'})]),
             html.Div(children=[
                 html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
