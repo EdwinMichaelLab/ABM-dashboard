@@ -121,8 +121,16 @@ enddate = date(2021, 8, 31)
 default_zipcode ="33510"
 default_year ="2021"
 
+year_for_all="2021"
+zipcode_for_all="33510"
+sampling_for_all=0.5 # 0.5=50%
+
 heatmap_size=0
 scatter_size=0
+
+graph_width=900
+graph_height=750
+
 
 def load_scatter(zipcode, year, width, height):
     #return load_scatter_mongodb(zipcode, year)
@@ -1028,7 +1036,13 @@ def load_SEIR(mode):
 """
 load_scatter using_read_parquet
 """
-def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year, width=900, height=750):
+def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year, width=graph_width, height=graph_height):
+    global year_for_all
+    global zipcode_for_all
+    global sampling_for_all
+    zipcode=zipcode_for_all
+    year=year_for_all
+
     total_steps = enddate - startdate
     step_until_lastday_of_2020=date(2020, 12, 31)-startdate
     min_step=0
@@ -1040,10 +1054,11 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year, width=
         min_step=step_until_lastday_of_2020.days + 1
         max_step=total_steps.days
  
-    if zipcode is None:
-        zipcode=default_zipcode
-    print("zipcode:", zipcode)
-    print(year, min_step, max_step)
+    # if zipcode is None:
+    #     zipcode=default_zipcode
+    # print("zipcode:", zipcode)
+
+    print(zipcode, year, min_step, max_step)
 
     columns_being_used_in_scatter=[
         'step',
@@ -1079,6 +1094,7 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year, width=
     pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
     pdf['Date']=pdf['Date'].astype(str)
     
+    pdf = pdf.sample(frac=sampling_for_all)
     # print('scatter data size(before '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
     # pdf = pdf.sample(frac=SAMPLING_PERCENT_1) # (???) similar to geting every 4th rows
     # print('scatter data size(after '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
@@ -1094,7 +1110,7 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year, width=
 """
 load_scatter via_mongodb
 """
-# def load_scatter_mongodb(zipcode=default_zipcode, year=default_year, width=900, height=750):
+# def load_scatter_mongodb(zipcode=default_zipcode, year=default_year, width=graph_width, height=graph_height):
 #     total_steps = enddate - startdate
 #     step_until_lastday_of_2020=date(2020, 12, 31)-startdate
 #     min_step=0
@@ -1154,7 +1170,14 @@ load_scatter via_mongodb
 """
 load_heatmap using_read_parquet
 """
-def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, width=900, height=750):
+def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, width=graph_width, height=graph_height):
+    global year_for_all
+    global zipcode_for_all
+    global sampling_for_all
+
+    zipcode=zipcode_for_all
+    year=year_for_all
+
     total_steps = enddate - startdate
     step_until_lastday_of_2020=date(2020, 12, 31)-startdate
     min_step=0
@@ -1166,10 +1189,10 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, width=
         min_step=step_until_lastday_of_2020.days + 1
         max_step=total_steps.days
  
-    if zipcode is None:
-        zipcode=default_zipcode
-    print("zipcode:", zipcode)
-    print(year, min_step, max_step)
+    # if zipcode is None:
+    #     zipcode=default_zipcode
+    # print("zipcode:", zipcode)
+    print(zipcode, year, min_step, max_step)
     
     columns_being_used_in_heatmap=[
         'step',
@@ -1204,6 +1227,8 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, width=
     #list_heatmap=list(heatmap.find({}))[::10]
     #print(len(list_heatmap))
     #pdf = pd.DataFrame(list_heatmap)
+
+    pdf = pdf.sample(frac=sampling_for_all)
     # print('heatmap data size(before '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
     # pdf = pdf.sample(frac=SAMPLING_PERCENT_2)
     # print('heatmap data size(after '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
@@ -1218,7 +1243,7 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, width=
 """
 load_heatmap using_mongodb
 """
-# def load_heatmap_mongodb(zipcode=default_zipcode, year=default_year, width=900, height=750):
+# def load_heatmap_mongodb(zipcode=default_zipcode, year=default_year, width=graph_width, height=graph_height):
 #     total_steps = enddate - startdate
 #     step_until_lastday_of_2020=date(2020, 12, 31)-startdate
 #     min_step=0
@@ -1424,6 +1449,32 @@ app.layout = html.Div(children=[
                         },
                 className="nav",
                 children=[
+                html.H4("Year:", className="control_label"),
+                dcc.Dropdown(
+                    id="year_for_all",
+                    options=[{'label': i, 'value': i} for i in ['2020','2021']],
+                    value=default_year
+                ),
+                html.H4("Zip Code: ", className="control_label"),
+                dcc.Dropdown(
+                    id="zipcode_for_all",
+                    options=[{'label': i, 'value': i} for i in ZIPS],
+                    value=default_zipcode
+                ),
+                html.H4("Sampling rate: ", className="control_label"),
+                dcc.Dropdown(
+                    id="sampling_for_all",
+                    options=[{'label': '10 %', 'value':0.1},
+                            {'label': '25 %', 'value':0.25},
+                            {'label': '50 %', 'value': 0.5},
+                            {'label': '75 %', 'value':0.75},
+                            {'label': "100 %", 'value':1.0}],
+                    value=0.5
+                ),
+                dcc.Store(id='year-store-value'),
+                dcc.Store(id='zipcode-store-value'),
+                dcc.Store(id='sampling-store-value'),
+           
                     # html.H4(
                     #     "(Coming soon) Select Forecast Range:",
                     #     className="control_label", style={'padding': 10, 'flex': 1}
@@ -1538,9 +1589,11 @@ heat_map_explain="The bar to the right of the map is a legend, assigning a color
 #    , prevent_initial_call=True) # first page... if uncommented, it will not be displayed
 @cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
 def render_content(tab):
+    global year_for_all
+    global zipcode_for_all
     global scatter_size
-    scatter_size=scatter_size
     global heatmap_size
+    scatter_size=scatter_size
     heatmap_size=heatmap_size
     print("scatter_size", scatter_size, "heatmap_size", heatmap_size)
 
@@ -1586,30 +1639,30 @@ def render_content(tab):
             )
         ])
     elif tab == 'tab2':
-        fig=load_scatter("33510", "2021", 900, 750)
+        fig=load_scatter(zipcode_for_all, year_for_all, graph_width, graph_height)
         return html.Div(id="tab2", children=[
             html.Br(),
             html.H2("Spatial plot of individual daily case emergence and spread"),
             html.P(scatter_map_explain),
             #html.P("(Steps equals Days starting March 1, 2020.)"),
             #html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_1*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
-            html.Div(id="scatter_size_num", children=[html.P("(Data size="+str(scatter_size)+")", style={'textAlign': 'center', 'color':'orange'})]),
-            html.Div(children=[
-                html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
-                dcc.RadioItems(
-                    id="year_scatter",
-                    options=[{'label': i, 'value': i} for i in ['2020','2021']],
-                    value=default_year,
-                   style={'display':'inline-block'}
-                ),
-                html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
-                dcc.Dropdown(
-                    id="zipcode_scatter",
-                    options=[{'label': i, 'value': i} for i in ZIPS],
-                    value=default_zipcode,
-                    style={'width':'150px', 'display':'inline-block', 'verticalAlign':'middle'}
-                ),
-            ], style={'width': '100%', 'display': 'inline-block'}),
+            html.Div(id="scatter_size_num", children=[html.P("(Data size="+str(scatter_size)+"), Sampling rate="+str(sampling_for_all), style={'textAlign': 'center', 'color':'orange'})]),
+            # html.Div(children=[
+            #     html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
+            #     dcc.RadioItems(
+            #         id="year_scatter",
+            #         options=[{'label': i, 'value': i} for i in ['2020','2021']],
+            #         value=default_year,
+            #        style={'display':'inline-block'}
+            #     ),
+            #     html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
+            #     dcc.Dropdown(
+            #         id="zipcode_scatter",
+            #         options=[{'label': i, 'value': i} for i in ZIPS],
+            #         value=default_zipcode,
+            #         style={'width':'150px', 'display':'inline-block', 'verticalAlign':'middle'}
+            #     ),
+            # ], style={'width': '100%', 'display': 'inline-block'}),
             dcc.Graph(
                 id="graph2",
                 #figure=figure2,
@@ -1620,7 +1673,7 @@ def render_content(tab):
             ),
         ])
     elif tab == 'tab3':
-        fig=load_heatmap("33510", "2021", 900, 750)
+        fig=load_heatmap(zipcode_for_all, year_for_all, graph_width, graph_height)
         return html.Div(id="tab3", children=[
             html.Br(),
             html.H2("Heatmap of the density of daily infectious cases"),
@@ -1628,23 +1681,23 @@ def render_content(tab):
             #html.P("(Steps equals Days starting March 1, 2020)"),
             html.P(heat_map_explain),
             #html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_2*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
-            html.Div(id="heatmap_size_num", children=[html.P("(Data size="+str(heatmap_size)+")", style={'textAlign': 'center', 'color':'orange'})]),
-            html.Div(children=[
-                html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
-                dcc.RadioItems(
-                    id="year_heatmap",
-                    options=[{'label': i, 'value': i} for i in ['2020','2021']],
-                    value=default_year,
-                   style={'display':'inline-block'}
-                ),
-                html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
-                dcc.Dropdown(
-                    id="zipcode_heatmap",
-                    options=[{'label': i, 'value': i} for i in ZIPS],
-                    value=default_zipcode,
-                    style={'width':'150px', 'display':'inline-block', 'verticalAlign':'middle'}
-                ),
-            ], style={'width': '100%', 'display': 'inline-block'}),
+            html.Div(id="heatmap_size_num", children=[html.P("(Data size="+str(heatmap_size)+"), Sampling rate="+str(sampling_for_all), style={'textAlign': 'center', 'color':'orange'})]),
+            # html.Div(children=[
+            #     html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
+            #     dcc.RadioItems(
+            #         id="year_heatmap",
+            #         options=[{'label': i, 'value': i} for i in ['2020','2021']],
+            #         value=default_year,
+            #        style={'display':'inline-block'}
+            #     ),
+            #     html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
+            #     dcc.Dropdown(
+            #         id="zipcode_heatmap",
+            #         options=[{'label': i, 'value': i} for i in ZIPS],
+            #         value=default_zipcode,
+            #         style={'width':'150px', 'display':'inline-block', 'verticalAlign':'middle'}
+            #     ),
+            # ], style={'width': '100%', 'display': 'inline-block'}),
             dcc.Graph(
                 id="graph3",
                 #figure=figure3,
@@ -1654,56 +1707,68 @@ def render_content(tab):
                 }                
             )
         ])
-    elif tab == 'tab4':
-        fig1=load_scatter("33510", "2021", width=750, height=600)
-        fig2=load_heatmap("33510", "2021", width=750, height=600)
-        return html.Div(id="tab4", children=[
-            html.Br(),
-            html.Div(children=[
-                html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
-                dcc.RadioItems(
-                    id="year_for_all",
-                    options=[{'label': i, 'value': i} for i in ['2020','2021']],
-                    value=default_year,
-                   style={'display':'inline-block'}
-                ),
-                html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
-                dcc.Dropdown(
-                    id="zipcode_for_all",
-                    options=[{'label': i, 'value': i} for i in ZIPS],
-                    value=default_zipcode,
-                    style={'width':'150px', 'display':'inline-block', 'verticalAlign':'middle'}
-                ),
-            ], style={'width': '100%', 'display': 'inline-block'}),
-            # dcc.Graph(
-            #     id='graph22',
-            #     #figure=figure2,
-            #     figure=load_scatter("33510", "2021")
-            # ),
-            # dcc.Graph(
-            #     id='graph33',
-            #     #figure=figure3,
-            #     figure=load_heatmap("33510", "2021")
-            # ),
-            html.Div(children=[
-                html.Div(
-                    dcc.Graph(
-                        id='graph22',
-                        figure= fig1,
-                        config={
-                            'displayModeBar': False
-                        }                
-                    ), style={'display': 'inline-block'}),
-                html.Div(
-                    dcc.Graph(
-                        id='graph33',
-                        figure=fig2,
-                        config={
-                            'displayModeBar': False
-                        }                
-                    ), style={'display': 'inline-block'})
-            ], style={'width': '100%', 'display': 'inline-block'})            
-        ])
+    # elif tab == 'tab4':
+    #     fig1=load_scatter("33510", "2021", width=750, height=600)
+    #     fig2=load_heatmap("33510", "2021", width=750, height=600)
+    #     return html.Div(id="tab4", children=[
+    #         html.Br(),
+    #         html.Div(children=[
+    #             html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
+    #             dcc.RadioItems(
+    #                 id="year_for_all",
+    #                 options=[{'label': i, 'value': i} for i in ['2020','2021']],
+    #                 value=default_year,
+    #                style={'display':'inline-block'}
+    #             ),
+    #             html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
+    #             dcc.Dropdown(
+    #                 id="zipcode_for_all",
+    #                 options=[{'label': i, 'value': i} for i in ZIPS],
+    #                 value=default_zipcode,
+    #                 style={'width':'150px', 'display':'inline-block', 'verticalAlign':'middle'}
+    #             ),
+    #         ], style={'width': '100%', 'display': 'inline-block'}),
+    #         # dcc.Graph(
+    #         #     id='graph22',
+    #         #     #figure=figure2,
+    #         #     figure=load_scatter("33510", "2021")
+    #         # ),
+    #         # dcc.Graph(
+    #         #     id='graph33',
+    #         #     #figure=figure3,
+    #         #     figure=load_heatmap("33510", "2021")
+    #         # ),
+    #         html.Div(children=[
+    #             html.Div(
+    #                 dcc.Graph(
+    #                     id='graph22',
+    #                     figure= fig1,
+    #                     config={
+    #                         'displayModeBar': False
+    #                     }                
+    #                 ), style={'display': 'inline-block'}),
+    #             html.Div(
+    #                 dcc.Graph(
+    #                     id='graph33',
+    #                     figure=fig2,
+    #                     config={
+    #                         'displayModeBar': False
+    #                     }                
+    #                 ), style={'display': 'inline-block'})
+    #         ], style={'width': '100%', 'display': 'inline-block'})            
+    #     ])
+
+@app.callback(Output('year-store-value', 'data'), Output('zipcode-store-value', 'data'), Output('sampling-store-value', 'data'),
+            Input('year_for_all', 'value'), Input('zipcode_for_all', 'value'), Input('sampling_for_all', 'value'))
+def store_data(year, zipcode, sampling):
+    global year_for_all
+    global zipcode_for_all
+    global sampling_for_all
+    year_for_all=year
+    zipcode_for_all=zipcode
+    sampling_for_all=sampling
+    print(year_for_all, zipcode_for_all, sampling_for_all)
+    return year_for_all, zipcode_for_all, sampling_for_all
 
 @app.callback(Output("graph1", 'figure'), Input("filter_type", "value"),
             prevent_initial_call=True)
@@ -1712,32 +1777,52 @@ def update_SEIR(filter_type):
     return load_SEIR(filter_type)
 
 @app.callback(Output("graph2", 'figure'), Output("scatter_size_num", "children"),
-            [Input("zipcode_scatter", "value"), Input("year_scatter", "value")],
+            #[Input("zipcode_scatter", "value"), Input("year_scatter", "value")],
+            #[Input("zipcode_for_all", "value"), Input("year_for_all", "value")],
+            [Input("zipcode-store-value", "data"), Input("year-store-value", "data"), Input('sampling-store-value', 'data')],
             prevent_initial_call=True)
 @cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
-def update_scatter_by_zipcode(zipcode_scatter, year_scatter):
+def update_scatter_by_zipcode(zipcode, year, sampling):
     global scatter_size
+    global sampling_for_all
+    global year_for_all
+    global zipcode_for_all
+
+    sampling_for_all=sampling
+    zipcode_for_all=zipcode
+    year_for_all=year
+
     time.sleep(1)
-    return load_scatter(zipcode_scatter, year_scatter, width=900, height=750), html.P("(Data size="+str(scatter_size)+")")
+    return load_scatter(zipcode_for_all, year_for_all, width=graph_width, height=graph_height), html.P("(Data size="+str(scatter_size)+")")
 
 @app.callback(Output("graph3", 'figure'), Output("heatmap_size_num", "children"),
-            [Input("zipcode_heatmap", "value"),Input("year_heatmap", "value")],
+            #[Input("zipcode_heatmap", "value"),Input("year_heatmap", "value")],
+            #[Input("zipcode_for_all", "value"), Input("year_for_all", "value")],
+            [Input("zipcode-store-value", "data"), Input("year-store-value", "data"), Input('sampling-store-value', 'data')],
             prevent_initial_call=True)
 @cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
-def update_heatmap_by_zipcode(zipcode_heatmap, year_heatmap):
+def update_heatmap_by_zipcode(zipcode, year, sampling):
     global heatmap_size
-    time.sleep(1)
-    return load_heatmap(zipcode_heatmap, year_heatmap, width=900, height=750), html.P("(Data size="+str(heatmap_size)+")")
+    global sampling_for_all
+    global year_for_all
+    global zipcode_for_all
 
-@app.callback([Output("graph22", 'figure'), Output("graph33", 'figure')],
-            [Input("zipcode_for_all", "value"), Input("year_for_all", "value")],
-            prevent_initial_call=True)
-@cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
-def update_scatter_and_heatmap(zipcode_for_all, year_for_all):
+    sampling_for_all=sampling
+    zipcode_for_all=zipcode
+    year_for_all=year
+
     time.sleep(1)
-    figure22 = load_scatter(zipcode_for_all, year_for_all, width=600, height=600)
-    figure33 = load_heatmap(zipcode_for_all, year_for_all, width=600, height=600)
-    return figure22, figure33
+    return load_heatmap(zipcode_for_all, year_for_all, width=graph_width, height=graph_height), html.P("(Data size="+str(heatmap_size)+")")
+
+# @app.callback([Output("graph22", 'figure'), Output("graph33", 'figure')],
+#             [Input("zipcode_for_all", "value"), Input("year_for_all", "value")],
+#             prevent_initial_call=True)
+# @cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
+# def update_scatter_and_heatmap(zipcode_for_all, year_for_all):
+#     time.sleep(1)
+#     figure22 = load_scatter(zipcode_for_all, year_for_all, width=600, height=600)
+#     figure33 = load_heatmap(zipcode_for_all, year_for_all, width=600, height=600)
+#     return figure22, figure33
 
 if __name__ == '__main__':
     app.run_server(debug=False,
