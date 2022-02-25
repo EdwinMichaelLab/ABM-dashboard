@@ -1591,6 +1591,7 @@ heat_map_explain="The bar to the right of the map is a legend, assigning a color
 def render_content(tab):
     global year_for_all
     global zipcode_for_all
+    global sampling_for_all
     global scatter_size
     global heatmap_size
     scatter_size=scatter_size
@@ -1646,7 +1647,11 @@ def render_content(tab):
             html.P(scatter_map_explain),
             #html.P("(Steps equals Days starting March 1, 2020.)"),
             #html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_1*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
-            html.Div(id="scatter_size_num", children=[html.P("(Data size="+str(scatter_size)+"), Sampling rate="+str(sampling_for_all), style={'textAlign': 'center', 'color':'orange'})]),
+            html.Div(id="scatter_size_num", children=[
+                html.P("(Data size="+str(scatter_size)+"), Sampling rate="+str(sampling_for_all), style={'textAlign': 'center', 'color':'orange'}),
+                html.Br(),
+                html.A("More info of ZIP="+zipcode_for_all, href='https://www.unitedstateszipcodes.org/'+zipcode_for_all+'/', target="_blank"),
+            ]),
             # html.Div(children=[
             #     html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
             #     dcc.RadioItems(
@@ -1681,7 +1686,11 @@ def render_content(tab):
             #html.P("(Steps equals Days starting March 1, 2020)"),
             html.P(heat_map_explain),
             #html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_2*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
-            html.Div(id="heatmap_size_num", children=[html.P("(Data size="+str(heatmap_size)+"), Sampling rate="+str(sampling_for_all), style={'textAlign': 'center', 'color':'orange'})]),
+            html.Div(id="heatmap_size_num", children=[
+                html.P("(Data size="+str(heatmap_size)+"), Sampling rate="+str(sampling_for_all), style={'textAlign': 'center', 'color':'orange'}),
+                html.Br(),
+                html.A("More info of ZIP="+zipcode_for_all, href='https://www.unitedstateszipcodes.org/'+zipcode_for_all+'/', target="_blank"),
+            ]),
             # html.Div(children=[
             #     html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
             #     dcc.RadioItems(
@@ -1793,7 +1802,11 @@ def update_scatter_by_zipcode(zipcode, year, sampling):
     year_for_all=year
 
     time.sleep(1)
-    return load_scatter(zipcode_for_all, year_for_all, width=graph_width, height=graph_height), html.P("(Data size="+str(scatter_size)+")")
+    return load_scatter(zipcode_for_all, year_for_all, width=graph_width, height=graph_height), html.Div(children=[
+            html.P("(Data size="+str(scatter_size)+"), Sampling rate="+str(sampling_for_all)),
+            html.Br(), 
+            html.A("More info of ZIP="+zipcode_for_all, href='https://www.unitedstateszipcodes.org/'+zipcode_for_all+'/', target="_blank")
+        ])
 
 @app.callback(Output("graph3", 'figure'), Output("heatmap_size_num", "children"),
             #[Input("zipcode_heatmap", "value"),Input("year_heatmap", "value")],
@@ -1812,8 +1825,11 @@ def update_heatmap_by_zipcode(zipcode, year, sampling):
     year_for_all=year
 
     time.sleep(1)
-    return load_heatmap(zipcode_for_all, year_for_all, width=graph_width, height=graph_height), html.P("(Data size="+str(heatmap_size)+")")
-
+    return load_heatmap(zipcode_for_all, year_for_all, width=graph_width, height=graph_height), html.Div(children=[
+            html.P("(Data size="+str(heatmap_size)+"), Sampling rate="+str(sampling_for_all)),
+            html.Br(), 
+            html.A("More info of ZIP="+zipcode_for_all, href='https://www.unitedstateszipcodes.org/'+zipcode_for_all+'/', target="_blank")
+        ])
 # @app.callback([Output("graph22", 'figure'), Output("graph33", 'figure')],
 #             [Input("zipcode_for_all", "value"), Input("year_for_all", "value")],
 #             prevent_initial_call=True)
