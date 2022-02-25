@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import dash
 #import dash_core_components as dcc
 from dash import dcc
@@ -1092,8 +1093,8 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year, width=
 
     #datelist = pd.date_range(startdate, enddate).tolist()
     pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
-    #pdf['Date']=pdf['Date'].astype(str)
-    pdf['Date']=pdf['Date'].astype('category')
+    pdf['Date']=pdf['Date'].astype(str)
+    #pdf['Date']=pdf['Date'].astype('category')
     
     pdf = pdf.sample(frac=sampling_for_all)
     # print('scatter data size(before '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
@@ -1221,8 +1222,8 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, width=
 
     #datelist = pd.date_range(startdate, enddate).tolist()
     pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
-    #pdf['Date']=pdf['Date'].astype(str)
-    pdf['Date']=pdf['Date'].astype('category')
+    pdf['Date']=pdf['Date'].astype(str)
+    #pdf['Date']=pdf['Date'].astype('category')
     #heatmap=db.heatmap
     #list_heatmap=list(heatmap.find({}))
     #list_heatmap=list(heatmap.find({}))[::10]
@@ -1311,8 +1312,8 @@ def draw_scatter(pdf, zipcode, width, height):
                             #animation_frame='step',
                             animation_frame='Date',
                             #animation_group='date',
-                            color='state',
                             #text='state',
+                            color='state',
                             color_discrete_map=legend_map,
                             lat='y',
                             lon='x',                            
@@ -1324,15 +1325,19 @@ def draw_scatter(pdf, zipcode, width, height):
                             #mapbox_style='carto-darkmatter',
                             mapbox_style='carto-positron',
     )
-
+    fig.update_layout(showlegend=False)
     #fig.update_traces(marker=dict(size=10))
     #fig.update_traces(marker=dict(size=6))
     fig.update_layout(legend=dict(
         orientation="h",
-        xanchor="left",
+        # xanchor="left",
+        # yanchor="bottom",
+        # x=0,
+        # y=-0.1,
         yanchor="bottom",
-        x=0,
-        y=-0.1,
+        y=1.02,
+        xanchor="right",
+        x=1,        
         #title_font_family="Times New Roman",
         font=dict(
             family="Courier",
@@ -1373,6 +1378,34 @@ def draw_heatmap(pdf, zipcode, width, height):
                             # mapbox_style='open-street-map'
                             mapbox_style='stamen-terrain')
     return fig
+'''
+    "susceptible":"blue",
+    "asymptomatic":"purple",
+    "vaccinated":"olive",
+    "boosted":"olive",
+    "recovered":"green",
+    "critical": "#F1948A",
+    "dead": "black",
+    "exposed": "orange",
+    "mild": "#F5B7B1",
+    "presymptomatic": "#F2D7D5",
+    "severe":"#EC7063"
+'''
+def draw_legend_table():
+    return html.Table(className='table', children = [
+                html.Tr( [html.Td("☻ susceptible", style={"color":"blue"}), 
+                    html.Td("☻ asymptomatic", style={"color":"purple"}),
+                    html.Td("☻ vaccinated", style={"color":"olive"}), 
+                    html.Td("☻ boosted", style={"color":"olive"}), 
+                    html.Td("☻ recovered", style={"color":"green"}),
+                    html.Td("")]),
+                html.Tr( [html.Td("☻ critical", style={"color":"#F1948A"}), 
+                    html.Td("☻ dead", style={"color":"black"}), 
+                    html.Td("☻ exposed", style={"color":"orange"}), 
+                    html.Td("☻ mild", style={"color":"#F5B7B1"}), 
+                    html.Td("☻ presymptomatic", style={"color":"#F2D7D5"}), 
+                    html.Td("☻ severe", style={"color":"#EC7063"})]),
+            ], style={"border-style": "ridge", "text-align": "left"})
 
 """
 main plotly dash start here.
@@ -1646,6 +1679,7 @@ def render_content(tab):
             html.Br(),
             html.H2("Spatial plot of individual daily case emergence and spread"),
             html.P(scatter_map_explain),
+            html.Br(),
             #html.P("(Steps equals Days starting March 1, 2020.)"),
             #html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_1*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
             html.Div(id="scatter_size_num", children=[
@@ -1669,6 +1703,7 @@ def render_content(tab):
             #         style={'width':'150px', 'display':'inline-block', 'verticalAlign':'middle'}
             #     ),
             # ], style={'width': '100%', 'display': 'inline-block'}),
+            html.Div(draw_legend_table(), style={'marginLeft': 'auto', 'marginRight': 'auto'}),
             dcc.Graph(
                 id="graph2",
                 #figure=figure2,
