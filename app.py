@@ -1092,7 +1092,8 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year, width=
 
     #datelist = pd.date_range(startdate, enddate).tolist()
     pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
-    pdf['Date']=pdf['Date'].astype(str)
+    #pdf['Date']=pdf['Date'].astype(str)
+    pdf['Date']=pdf['Date'].astype('category')
     
     pdf = pdf.sample(frac=sampling_for_all)
     # print('scatter data size(before '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
@@ -1220,8 +1221,8 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, width=
 
     #datelist = pd.date_range(startdate, enddate).tolist()
     pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
-    pdf['Date']=pdf['Date'].astype(str)
-
+    #pdf['Date']=pdf['Date'].astype(str)
+    pdf['Date']=pdf['Date'].astype('category')
     #heatmap=db.heatmap
     #list_heatmap=list(heatmap.find({}))
     #list_heatmap=list(heatmap.find({}))[::10]
