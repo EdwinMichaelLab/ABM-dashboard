@@ -1405,7 +1405,7 @@ def draw_legend_table():
                     html.Td("☻ mild", style={"color":"#F5B7B1"}), 
                     html.Td("☻ presymptomatic", style={"color":"#F2D7D5"}), 
                     html.Td("☻ severe", style={"color":"#EC7063"})]),
-            ], style={"border-style": "ridge", "text-align": "left"})
+            ], style={"border-style": "ridge", "text-align": "left", 'marginLeft': 'auto', 'marginRight': 'auto'})
 
 """
 main plotly dash start here.
@@ -1703,6 +1703,7 @@ def render_content(tab):
             #         style={'width':'150px', 'display':'inline-block', 'verticalAlign':'middle'}
             #     ),
             # ], style={'width': '100%', 'display': 'inline-block'}),
+            html.Br(),
             html.Div(draw_legend_table(), style={'marginLeft': 'auto', 'marginRight': 'auto'}),
             dcc.Graph(
                 id="graph2",
