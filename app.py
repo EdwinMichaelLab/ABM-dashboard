@@ -121,10 +121,11 @@ enddate = date(2021, 8, 31)
 
 default_zipcode ="33510"
 default_year ="2021"
+default_zoom=9
 
 year_for_all="2021"
 zipcode_for_all="33510"
-sampling_for_all=0.5 # 0.5=50%
+sampling_for_all=0.25 # 0.5=50%
 
 heatmap_size=0
 scatter_size=0
@@ -1300,7 +1301,7 @@ def draw_scatter(pdf, zipcode, width, height):
 
     center_lat = 28.03711
     center_lon = -82.46390
-    zoom_level=9
+    zoom_level=default_zoom
     if ZIPS_centers[zipcode]:
         center_lat=ZIPS_centers[zipcode][0]
         center_lon=ZIPS_centers[zipcode][1]
@@ -1483,31 +1484,31 @@ app.layout = html.Div(children=[
                         },
                 className="nav",
                 children=[
-                html.H4("Year:", className="control_label"),
-                dcc.Dropdown(
-                    id="year_for_all",
-                    options=[{'label': i, 'value': i} for i in ['2020','2021']],
-                    value=default_year
-                ),
-                html.H4("Zip Code: ", className="control_label"),
-                dcc.Dropdown(
-                    id="zipcode_for_all",
-                    options=[{'label': i, 'value': i} for i in ZIPS],
-                    value=default_zipcode
-                ),
-                html.H4("Sampling rate: ", className="control_label"),
-                dcc.Dropdown(
-                    id="sampling_for_all",
-                    options=[{'label': '10 %', 'value':0.1},
-                            {'label': '25 %', 'value':0.25},
-                            {'label': '50 %', 'value': 0.5},
-                            {'label': '75 %', 'value':0.75},
-                            {'label': "100 %", 'value':1.0}],
-                    value=0.5
-                ),
-                dcc.Store(id='year-store-value'),
-                dcc.Store(id='zipcode-store-value'),
-                dcc.Store(id='sampling-store-value'),
+                # html.H4("Choose Year:", className="control_label"),
+                # dcc.Dropdown(
+                #     id="year_for_all",
+                #     options=[{'label': i, 'value': i} for i in ['2020','2021']],
+                #     value=default_year
+                # ),
+                # html.H4("Choose Zip Code: ", className="control_label"),
+                # dcc.Dropdown(
+                #     id="zipcode_for_all",
+                #     options=[{'label': i, 'value': i} for i in ZIPS],
+                #     value=default_zipcode
+                # ),
+                # html.H4("Sampling rate: ", className="control_label"),
+                # dcc.Dropdown(
+                #     id="sampling_for_all",
+                #     options=[{'label': '10 %', 'value':0.1},
+                #             {'label': '25 %', 'value':0.25},
+                #             {'label': '50 %', 'value': 0.5},
+                #             {'label': '75 %', 'value':0.75},
+                #             {'label': "100 %", 'value':1.0}],
+                #     value=0.25
+                # ),
+                # dcc.Store(id='year-store-value'),
+                # dcc.Store(id='zipcode-store-value'),
+                # dcc.Store(id='sampling-store-value'),
            
                     # html.H4(
                     #     "(Coming soon) Select Forecast Range:",
@@ -1618,18 +1619,34 @@ These inviduals and their spread over time is represented by the spatial scatter
 
 heat_map_explain="The bar to the right of the map is a legend, assigning a color on a gradient based on the number of cases within a zip code. The zip code areas with the highest number of cases will be red and the zip code areas with the lowest number of cases will be dark green. A z-value is computed based on the aggerate cases at a certain location and represents the heat of that location. A higher z-value represents higher density of the cases at a given location."
 
+# @app.callback([Output('year-store-value', 'data'), Output('zipcode-store-value', 'data'), Output('sampling-store-value', 'data')],
+#             [Input('year_for_all', 'value'), Input('zipcode_for_all', 'value'), Input('sampling_for_all', 'value')],
+#             prevent_initial_call=True)
+# def store_data(year, zipcode, sampling):
+#     global year_for_all
+#     global zipcode_for_all
+#     global sampling_for_all
+#     year_for_all=year
+#     zipcode_for_all=zipcode
+#     sampling_for_all=sampling
+#     print(year_for_all, zipcode_for_all, sampling_for_all)
+#     return year_for_all, zipcode_for_all, sampling_for_all
+
 @app.callback(Output('tabs-contentgraph', 'children'), 
-    Input('tabsgraph', 'value'))
-#    , prevent_initial_call=True) # first page... if uncommented, it will not be displayed
+    Input('tabsgraph', 'value')) # first page... if uncommented, it will not be displayed
 @cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
+#def render_content(tab):
 def render_content(tab):
     global year_for_all
     global zipcode_for_all
     global sampling_for_all
+
     global scatter_size
     global heatmap_size
+
     scatter_size=scatter_size
     heatmap_size=heatmap_size
+
     print("scatter_size", scatter_size, "heatmap_size", heatmap_size)
 
     if tab=='moretab':
@@ -1664,13 +1681,26 @@ def render_content(tab):
             html.P("* FPL: Federal Poverty Level (%)", style={'padding': 10, 'flex': 1}),
             #html.A("Federal Poverty Level", href='https://www.healthcare.gov/glossary/federal-poverty-level-fpl/', target="_blank", style={'padding': 10, 'flex': 1}),
             #html.Br(),
-            dcc.Graph(
-                id='graph1',
-                #figure=figure1,
-                figure=load_SEIR('All cases'),
-                config={
-                    'displayModeBar': False
-                }                
+            html.Div(children=[
+                dcc.Graph(
+                    id='graph1',
+                    #figure=figure1,
+                    figure=load_SEIR('All cases'),
+                    config={
+                        'displayModeBar': False
+                    },
+                    responsive=True,
+                    style={
+                        "width": "100%",
+                        "height": "100%",
+                    }
+                )],
+                style={
+                        "width": "1000px",
+                        "height": "1000px",
+                        "display": "inline-block",
+                        "overflow": "hidden"
+                }
             )
         ])
     elif tab == 'tab2':
@@ -1679,40 +1709,64 @@ def render_content(tab):
             html.Br(),
             html.H2("Spatial plot of individual daily case emergence and spread"),
             html.P(scatter_map_explain),
-            html.Br(),
             #html.P("(Steps equals Days starting March 1, 2020.)"),
             #html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_1*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
+            html.Div(children=[
+                html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
+                dcc.Dropdown(
+                    id="year_scatter",
+                    options=[{'label': i, 'value': i} for i in ['2020','2021']],
+                    value=default_year,
+                    style={'width':'100px', 'display':'inline-block', 'verticalAlign':'middle'}
+                ),
+                html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
+                dcc.Dropdown(
+                    id="zipcode_scatter",
+                    options=[{'label': i, 'value': i} for i in ZIPS],
+                    value=default_zipcode,
+                    style={'width':'120px', 'display':'inline-block', 'verticalAlign':'middle'}
+                ),
+                html.H4(", Sampling rate: ", className="control_label", style={'display': 'inline-block'}),
+                dcc.Dropdown(
+                    id="sampling_scatter",
+                    options=[{'label': '10 %', 'value':0.1},
+                            {'label': '25 %', 'value':0.25},
+                            {'label': '50 %', 'value': 0.5},
+                            {'label': '75 %', 'value':0.75},
+                            {'label': "100 %", 'value':1.0}],
+                    value=0.25,
+                    style={'width':'100px', 'display':'inline-block', 'verticalAlign':'middle'}
+                ),
+            ], style={'width': '100%', 'display': 'inline-block'}),
             html.Div(id="scatter_size_num", children=[
                 html.P("(Data size="+str(scatter_size)+"), Sampling rate="+str(sampling_for_all), style={'textAlign': 'center', 'color':'orange'}),
-                html.Br(),
+            ]),
+            html.Div(children=[dcc.Graph(id="graph2",
+                        figure=fig,
+                        config={
+                            'displayModeBar': False
+                        },
+                        responsive=True,
+                        style={
+                            "width": "100%",
+                            "height": "100%",
+                        }
+                    ),
+                    draw_legend_table(),   
+                ],
+                style={
+                        "width": "900px",
+                        "height": "750px",
+                        "display": "inline-block",
+                        "padding-top": "0px",
+                        "padding-left": "1px",
+                        "overflow": "hidden"
+                }
+            ),
+            html.Div(children=[
                 html.A("More info of ZIP="+zipcode_for_all, href='https://www.unitedstateszipcodes.org/'+zipcode_for_all+'/', target="_blank"),
             ]),
-            # html.Div(children=[
-            #     html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
-            #     dcc.RadioItems(
-            #         id="year_scatter",
-            #         options=[{'label': i, 'value': i} for i in ['2020','2021']],
-            #         value=default_year,
-            #        style={'display':'inline-block'}
-            #     ),
-            #     html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
-            #     dcc.Dropdown(
-            #         id="zipcode_scatter",
-            #         options=[{'label': i, 'value': i} for i in ZIPS],
-            #         value=default_zipcode,
-            #         style={'width':'150px', 'display':'inline-block', 'verticalAlign':'middle'}
-            #     ),
-            # ], style={'width': '100%', 'display': 'inline-block'}),
-            html.Br(),
-            html.Div(draw_legend_table(), style={'marginLeft': 'auto', 'marginRight': 'auto'}),
-            dcc.Graph(
-                id="graph2",
-                #figure=figure2,
-                figure=fig,
-                config={
-                    'displayModeBar': False
-                }                
-            ),
+
         ])
     elif tab == 'tab3':
         fig=load_heatmap(zipcode_for_all, year_for_all, graph_width, graph_height)
@@ -1722,36 +1776,65 @@ def render_content(tab):
             #html.P("(Z values represents the number of cases within the same zipcode area.)"),
             #html.P("(Steps equals Days starting March 1, 2020)"),
             html.P(heat_map_explain),
+            html.Div(children=[
+                html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
+                dcc.Dropdown(
+                    id="year_heatmap",
+                    options=[{'label': i, 'value': i} for i in ['2020','2021']],
+                    value=default_year,
+                   style={'width':'100px', 'display':'inline-block', 'verticalAlign':'middle'}
+                ),
+                html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
+                dcc.Dropdown(
+                    id="zipcode_heatmap",
+                    options=[{'label': i, 'value': i} for i in ZIPS],
+                    value=default_zipcode,
+                    style={'width':'120px', 'display':'inline-block', 'verticalAlign':'middle'}
+                ),
+                html.H4("Sampling rate: ", className="control_label", style={'display': 'inline-block'}),
+                dcc.Dropdown(
+                    id="sampling_heatmap",
+                    options=[{'label': '10 %', 'value':0.1},
+                            {'label': '25 %', 'value':0.25},
+                            {'label': '50 %', 'value': 0.5},
+                            {'label': '75 %', 'value':0.75},
+                            {'label': "100 %", 'value':1.0}],
+                    value=0.25,
+                    style={'width':'100px', 'display':'inline-block', 'verticalAlign':'middle'}
+                ),
+            ], style={'width': '100%', 'display': 'inline-block'}),
             #html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_2*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
             html.Div(id="heatmap_size_num", children=[
                 html.P("(Data size="+str(heatmap_size)+"), Sampling rate="+str(sampling_for_all), style={'textAlign': 'center', 'color':'orange'}),
-                html.Br(),
+            ]),
+            html.Div(children=[
+                    dcc.Graph(
+                        id="graph3",
+                        #figure=figure3,
+                        figure=fig,
+                        config={
+                            'displayModeBar': False
+                        },
+                        responsive=True,
+                        style={
+                            "width": "100%",
+                            "height": "100%",
+                        }
+                    )
+                ],
+                style={
+                        "width": "900px",
+                        "height": "750px",
+                        "display": "inline-block",
+                        "padding-top": "0px",
+                        "padding-left": "1px",
+                        "overflow": "hidden"
+                }
+            ),
+            html.Div(children=[
                 html.A("More info of ZIP="+zipcode_for_all, href='https://www.unitedstateszipcodes.org/'+zipcode_for_all+'/', target="_blank"),
             ]),
-            # html.Div(children=[
-            #     html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
-            #     dcc.RadioItems(
-            #         id="year_heatmap",
-            #         options=[{'label': i, 'value': i} for i in ['2020','2021']],
-            #         value=default_year,
-            #        style={'display':'inline-block'}
-            #     ),
-            #     html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
-            #     dcc.Dropdown(
-            #         id="zipcode_heatmap",
-            #         options=[{'label': i, 'value': i} for i in ZIPS],
-            #         value=default_zipcode,
-            #         style={'width':'150px', 'display':'inline-block', 'verticalAlign':'middle'}
-            #     ),
-            # ], style={'width': '100%', 'display': 'inline-block'}),
-            dcc.Graph(
-                id="graph3",
-                #figure=figure3,
-                figure=fig,
-                config={
-                    'displayModeBar': False
-                }                
-            )
+
         ])
     # elif tab == 'tab4':
     #     fig1=load_scatter("33510", "2021", width=750, height=600)
@@ -1804,18 +1887,6 @@ def render_content(tab):
     #         ], style={'width': '100%', 'display': 'inline-block'})            
     #     ])
 
-@app.callback(Output('year-store-value', 'data'), Output('zipcode-store-value', 'data'), Output('sampling-store-value', 'data'),
-            Input('year_for_all', 'value'), Input('zipcode_for_all', 'value'), Input('sampling_for_all', 'value'))
-def store_data(year, zipcode, sampling):
-    global year_for_all
-    global zipcode_for_all
-    global sampling_for_all
-    year_for_all=year
-    zipcode_for_all=zipcode
-    sampling_for_all=sampling
-    print(year_for_all, zipcode_for_all, sampling_for_all)
-    return year_for_all, zipcode_for_all, sampling_for_all
-
 @app.callback(Output("graph1", 'figure'), Input("filter_type", "value"),
             prevent_initial_call=True)
 @cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
@@ -1825,7 +1896,8 @@ def update_SEIR(filter_type):
 @app.callback(Output("graph2", 'figure'), Output("scatter_size_num", "children"),
             #[Input("zipcode_scatter", "value"), Input("year_scatter", "value")],
             #[Input("zipcode_for_all", "value"), Input("year_for_all", "value")],
-            [Input("zipcode-store-value", "data"), Input("year-store-value", "data"), Input('sampling-store-value', 'data')],
+            #[Input("zipcode-store-value", "data"), Input("year-store-value", "data"), Input('sampling-store-value', 'data')],
+            [Input("zipcode_scatter", "value"), Input("year_scatter", "value"), Input('sampling_scatter', 'value')],
             prevent_initial_call=True)
 @cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
 def update_scatter_by_zipcode(zipcode, year, sampling):
@@ -1848,7 +1920,8 @@ def update_scatter_by_zipcode(zipcode, year, sampling):
 @app.callback(Output("graph3", 'figure'), Output("heatmap_size_num", "children"),
             #[Input("zipcode_heatmap", "value"),Input("year_heatmap", "value")],
             #[Input("zipcode_for_all", "value"), Input("year_for_all", "value")],
-            [Input("zipcode-store-value", "data"), Input("year-store-value", "data"), Input('sampling-store-value', 'data')],
+            #[Input("zipcode-store-value", "data"), Input("year-store-value", "data"), Input('sampling-store-value', 'data')],
+            [Input("zipcode_heatmap", "value"), Input("year_heatmap", "value"), Input('sampling_heatmap', 'value')],
             prevent_initial_call=True)
 @cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
 def update_heatmap_by_zipcode(zipcode, year, sampling):
