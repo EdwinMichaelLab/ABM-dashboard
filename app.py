@@ -125,7 +125,7 @@ default_zoom=9
 
 year_for_all="2021"
 zipcode_for_all="33510"
-sampling_for_all=0.25 # 0.5=50%
+sampling_for_all=0.1 # 0.5=50%
 
 heatmap_size=0
 scatter_size=0
@@ -211,7 +211,6 @@ def plot(min, mean, max):
     fig.update_layout(showlegend=True, autosize=True, width=800, height=900,
                       legend=dict(orientation="h",x=0, y=-0.1, traceorder="normal"),
                       font=dict(family="Arial", size=12))
-
     #fig.show()
     return fig
 
@@ -983,6 +982,23 @@ def get_RMSE(zip, actual, simulated):
     mape = mean_absolute_percentage_error(actual, simulated)
     return rmse
 
+def plot2(df):
+    # Create figure
+    fig = go.Figure()
+
+    # Loop df columns and plot columns to the figure
+    #list_cols = df.columns.values.tolist()
+    # list_cols=['cases', 'deaths', 'admissions']
+    # for i in range(1, len(list_cols)):
+    #     col_name = list_cols[i]
+    #     fig.add_trace(go.Scatter(x=df['date'], y=df[col_name],
+    #                         mode='lines', # 'lines' or 'markers'
+    #                         name=col_name))
+    fig.add_trace(go.Scatter(x=df['date'], y=df['cases'],
+                            mode='lines', # 'lines' or 'markers'
+                            name='cases'))
+
+    return fig
 
 def load_SEIR(mode):
     if mode=='All cases':
@@ -1001,7 +1017,7 @@ def load_SEIR(mode):
         print('All plots-Loading completed!')
         plotdf = pd.concat(dlist, axis=1)
         dates = dlist[0]['date'].tolist()
-        plotdf.drop('date', axis=1, inplace=True)
+        #####plotdf.drop('date', axis=1, inplace=True)
 
         max = plotdf.groupby(plotdf.columns, axis=1).max()
         mean = plotdf.groupby(plotdf.columns, axis=1).mean()
@@ -1010,7 +1026,10 @@ def load_SEIR(mode):
         mean['date'] = dates
         min['date'] = dates
         #print('Loading completed!')
-        return plot(min, mean, max)
+        
+        #return plot(min, mean, max)
+        return plot2(plotdf)
+
     else:
         dlist = []
         for root, dirs, files in os.walk(path):
@@ -1591,7 +1610,7 @@ app.layout = html.Div(children=[
                                 dcc.Tab(label='COVID-19 Time Plots', value='tab1', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='COVID-19 Spatial Spread', value='tab2', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='COVID-19 Heatmap', value='tab3', style = tab_style, selected_style = tab_selected_style),
-                                # dcc.Tab(label='COVID-19 Spatial Spread and Heatmap', value='tab4', style = tab_style, selected_style = tab_selected_style),
+                                dcc.Tab(label='COVID-19 Spatial Spread and Heatmap', value='tab4', style = tab_style, selected_style = tab_selected_style),
                             ], style = tabs_styles),
                             html.Div(
                                 id='tabs-contentgraph'),
@@ -1836,56 +1855,83 @@ def render_content(tab):
             ]),
 
         ])
-    # elif tab == 'tab4':
-    #     fig1=load_scatter("33510", "2021", width=750, height=600)
-    #     fig2=load_heatmap("33510", "2021", width=750, height=600)
-    #     return html.Div(id="tab4", children=[
-    #         html.Br(),
-    #         html.Div(children=[
-    #             html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
-    #             dcc.RadioItems(
-    #                 id="year_for_all",
-    #                 options=[{'label': i, 'value': i} for i in ['2020','2021']],
-    #                 value=default_year,
-    #                style={'display':'inline-block'}
-    #             ),
-    #             html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
-    #             dcc.Dropdown(
-    #                 id="zipcode_for_all",
-    #                 options=[{'label': i, 'value': i} for i in ZIPS],
-    #                 value=default_zipcode,
-    #                 style={'width':'150px', 'display':'inline-block', 'verticalAlign':'middle'}
-    #             ),
-    #         ], style={'width': '100%', 'display': 'inline-block'}),
-    #         # dcc.Graph(
-    #         #     id='graph22',
-    #         #     #figure=figure2,
-    #         #     figure=load_scatter("33510", "2021")
-    #         # ),
-    #         # dcc.Graph(
-    #         #     id='graph33',
-    #         #     #figure=figure3,
-    #         #     figure=load_heatmap("33510", "2021")
-    #         # ),
-    #         html.Div(children=[
-    #             html.Div(
-    #                 dcc.Graph(
-    #                     id='graph22',
-    #                     figure= fig1,
-    #                     config={
-    #                         'displayModeBar': False
-    #                     }                
-    #                 ), style={'display': 'inline-block'}),
-    #             html.Div(
-    #                 dcc.Graph(
-    #                     id='graph33',
-    #                     figure=fig2,
-    #                     config={
-    #                         'displayModeBar': False
-    #                     }                
-    #                 ), style={'display': 'inline-block'})
-    #         ], style={'width': '100%', 'display': 'inline-block'})            
-    #     ])
+    elif tab == 'tab4':
+        fig1=load_scatter("33510", "2021", width=750, height=600)
+        fig2=load_heatmap("33510", "2021", width=750, height=600)
+        return html.Div(id="tab4", children=[
+            html.Br(),
+            # html.Div(children=[
+            #     html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
+            #     dcc.RadioItems(
+            #         id="year_for_all",
+            #         options=[{'label': i, 'value': i} for i in ['2020','2021']],
+            #         value=default_year,
+            #        style={'display':'inline-block'}
+            #     ),
+            #     html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
+            #     dcc.Dropdown(
+            #         id="zipcode_for_all",
+            #         options=[{'label': i, 'value': i} for i in ZIPS],
+            #         value=default_zipcode,
+            #         style={'width':'150px', 'display':'inline-block', 'verticalAlign':'middle'}
+            #     ),
+            # ], style={'width': '100%', 'display': 'inline-block'}),
+            html.Div(children=[
+                html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
+                dcc.Dropdown(
+                    id="year_for_all",
+                    options=[{'label': i, 'value': i} for i in ['2020','2021']],
+                    value=default_year,
+                    style={'width':'100px', 'display':'inline-block', 'verticalAlign':'middle'}
+                ),
+                html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
+                dcc.Dropdown(
+                    id="zipcode_for_all",
+                    options=[{'label': i, 'value': i} for i in ZIPS],
+                    value=default_zipcode,
+                    style={'width':'120px', 'display':'inline-block', 'verticalAlign':'middle'}
+                ),
+                html.H4(", Sampling rate: ", className="control_label", style={'display': 'inline-block'}),
+                dcc.Dropdown(
+                    id="sampling_for_all",
+                    options=[{'label': '10 %', 'value':0.1},
+                            {'label': '20 %', 'value':0.2},
+                            {'label': '25 %', 'value': 0.25},
+                            #{'label': '75 %', 'value':0.75},
+                            #{'label': "100 %", 'value':1.0}],
+                    value=0.1,
+                    style={'width':'100px', 'display':'inline-block', 'verticalAlign':'middle'}
+                ),
+            ], style={'width': '100%', 'display': 'inline-block'}),
+            # dcc.Graph(
+            #     id='graph22',
+            #     #figure=figure2,
+            #     figure=load_scatter("33510", "2021")
+            # ),
+            # dcc.Graph(
+            #     id='graph33',
+            #     #figure=figure3,
+            #     figure=load_heatmap("33510", "2021")
+            # ),
+            html.Div(children=[
+                html.Div(
+                    dcc.Graph(
+                        id='graph22',
+                        figure= fig1,
+                        config={
+                            'displayModeBar': False
+                        }                
+                    ), style={'display': 'inline-block'}),
+                html.Div(
+                    dcc.Graph(
+                        id='graph33',
+                        figure=fig2,
+                        config={
+                            'displayModeBar': False
+                        }                
+                    ), style={'display': 'inline-block'})
+            ], style={'width': '100%', 'display': 'inline-block'})            
+        ])
 
 @app.callback(Output("graph1", 'figure'), Input("filter_type", "value"),
             prevent_initial_call=True)
@@ -1949,6 +1995,24 @@ def update_heatmap_by_zipcode(zipcode, year, sampling):
 #     figure22 = load_scatter(zipcode_for_all, year_for_all, width=600, height=600)
 #     figure33 = load_heatmap(zipcode_for_all, year_for_all, width=600, height=600)
 #     return figure22, figure33
+
+@app.callback([Output("graph22", 'figure'), Output("graph33", 'figure')],
+            [Input("zipcode_for_all", "value"), Input("year_for_all", "value"), Input("sampling_for_all", "value")],
+            prevent_initial_call=True)
+@cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
+def update_scatter_and_heatmap(zipcode, year, sampling):
+    global sampling_for_all
+    global year_for_all
+    global zipcode_for_all
+
+    sampling_for_all=sampling
+    zipcode_for_all=zipcode
+    year_for_all=year
+
+    time.sleep(1)
+    figure22 = load_scatter(zipcode_for_all, year_for_all, width=600, height=500)
+    figure33 = load_heatmap(zipcode_for_all, year_for_all, width=600, height=500)
+    return figure22, figure33
 
 if __name__ == '__main__':
     app.run_server(debug=False,
