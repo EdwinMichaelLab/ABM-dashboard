@@ -100,7 +100,7 @@ ZIPS_centers={ '33510':[27.96, -82.30],
                 '33637':[28.05, -82.36],
                 '33647':[28.12, -82.35]}
 MAX_ROWS=10000000
-path = os.path.join('..', 'EDEN-ABM-Simulator', 'SimulationEngine', 'output', '2021-12-29', 'run4')
+path = os.path.join('..', 'EDEN-ABM-Simulator', 'SimulationEngine', 'output', '2022-03-01', 'run6')
 #path = os.path.join('..', 'EDEN-ABM-Simulator-new', 'SimulationEngine', 'output', '2021-12-29', 'run4')
 print(path)
 
