@@ -1058,7 +1058,12 @@ def load_SEIR(mode):
         plotdf=plotdf.groupby(plotdf.columns, axis=1).sum()
         plotdf['date']= dlist[0]['date'].tolist()
         df2 =pd.DataFrame(plotdf, columns=['date', 'cases', 'deaths','admissions', 'vcases', 'vdeaths', 'vadmissions'])
-
+        # temporary solutions for empty vcases/vdeaths/vadmissions
+        if set(['vcases','vdeaths', 'vadmissions']).issubset(df2.columns) is False:
+            df2['vcases']=df2['cases']
+            df2['vdeaths']=df2['deaths']
+            df2['vadmissions']=df2['admissions']
+            print("Warning: vcases/vadmissions/vdeaths not found. Use cases/admissions/deathss")
         #print('Loading completed!')
         
         #return plot(min, mean, max)
@@ -1078,7 +1083,12 @@ def load_SEIR(mode):
         print('Filtered plots-Loading completed!')
         plotdf = pd.concat(dlist)
         plotdf = plotdf.sort_values(by='date')
-
+        # temporary solutions for empty vcases/vdeaths/vadmissions
+        if set(['vcases','vdeaths', 'vadmissions']).issubset(plotdf.columns)==False:
+            plotdf['vcases']=plotdf['cases']
+            plotdf['vdeaths']=plotdf['deaths']
+            plotdf['vadmissions']=plotdf['admissions']
+            print("Warning: vcases/vadmissions/vdeaths not found. Use cases/admissions/deathss")
         if mode == 'By Age':
             #return plot_age(plotdf)
             return plot_age2(plotdf)
