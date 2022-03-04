@@ -33,6 +33,10 @@ import threading
 import time
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_percentage_error
+from flask_caching import Cache
+
+folder_name=""
+
 #import vaex
 
 # import pymongo
@@ -41,7 +45,6 @@ from sklearn.metrics import mean_absolute_percentage_error
 # print(client)
 # db = client["abm"]
 
-from flask_caching import Cache
 
 ZIPS = ['33510', '33511', '33527', '33534', '33547', '33548', '33549', '33556', '33558', '33559', '33563', '33565',
             '33566', '33567', '33569', '33570', '33572', '33573', '33578', '33579', '33584', '33592', '33594', '33596',
@@ -100,8 +103,23 @@ ZIPS_centers={ '33510':[27.96, -82.30],
                 '33637':[28.05, -82.36],
                 '33647':[28.12, -82.35]}
 MAX_ROWS=10000000
-path = os.path.join('..', 'EDEN-ABM-Simulator', 'SimulationEngine', 'output', '2022-03-01', 'run6')
-#path = os.path.join('..', 'EDEN-ABM-Simulator-new', 'SimulationEngine', 'output', '2021-12-29', 'run4')
+
+if len(sys.argv)==2:
+    print("Try to launch plotly-dash webapp using results in ../output/"+str(sys.argv[1]))
+    folder_name=sys.argv[1]
+    if (os.path.exists(os.path.join('..', 'ABM-simulator', 'SimulationEngine', 'output',folder_name))):
+        pass
+    else:
+        print("Floder("+folder_name+") does not exist")
+        exit()
+else:
+    print("Please type result-folder name.")
+    print('Usage: python '+str(sys.argv[0])+' result_folder_name')
+    exit()
+
+#path = os.path.join('..', 'ABM-simulator', 'SimulationEngine', 'output', '2022-03-01', 'run1-imran-0301')
+path = os.path.join('..', 'ABM-simulator', 'SimulationEngine', 'output', folder_name)
+
 print(path)
 
 SF1 = 22
@@ -119,7 +137,7 @@ SF2 = 5
 #SAMPLING_PERCENT_2=0.5 # default 0.5
 
 startdate = date(2020, 3, 1)
-enddate = date(2021, 8, 31)
+enddate = date(2022, 1, 31)
 
 default_zipcode ="33510"
 default_year ="2021"
