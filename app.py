@@ -34,6 +34,7 @@ import time
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_percentage_error
 from flask_caching import Cache
+import numbers
 
 folder_name=""
 
@@ -1092,7 +1093,10 @@ def load_SEIR(mode):
         #####plotdf.drop('date', axis=1, inplace=True)
 
         max = plotdf.groupby(plotdf.columns, axis=1).max()
-        mean = plotdf.groupby(plotdf.columns, axis=1).mean()
+        #mean = plotdf.groupby(plotdf.columns, axis=1).mean() # error! return 0s ... use transpose() for fix
+        df2=plotdf.transpose()
+        df2 = df2.groupby(by=df2.index, axis=0).apply(lambda g: g.mean() if isinstance(g.iloc[0,0], numbers.Number) else g.iloc[0])
+        mean = df2.transpose()        
         min = plotdf.groupby(plotdf.columns, axis=1).min()
         max['date'] = dates
         mean['date'] = dates
