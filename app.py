@@ -202,30 +202,22 @@ def calc_7_day_average(df):
 def calc_mean(df):
     df=df.transpose()
     df = df.groupby(by=df.index, axis=0).apply(lambda g: g.mean() if isinstance(g.iloc[0,0], numbers.Number) else g.iloc[0])
-    return df.transpose()        
+    return df.transpose()
+    
 def plot2(min, mean, max, df):
     # Create figure
     fig = go.Figure()
 
     sub_groups = ['Simulated cases', 'Actual cases', 'Simulated admissions', 'Actual admissions', 'Simulated deaths', 'Actual deaths']
-    fig = make_subplots(rows=6, cols=1, 
+    fig = make_subplots(rows=3, cols=1, 
         subplot_titles=sub_groups, 
         shared_xaxes=True, 
+        specs=[[{"secondary_y": True}],[{"secondary_y": True}],[{"secondary_y": True}]],
+        #specs=[[{"secondary_y": True}],[{"secondary_y": False}],[{"secondary_y": True}],[{"secondary_y": False}],[{"secondary_y": True}],[{"secondary_y": False}],],
         vertical_spacing = 0.05,
-        row_width=[0.15, 0.2, 0.15, 0.25, 0.15, 0.25])
+        #row_width=[0.15, 0.2, 0.15, 0.25, 0.15, 0.25])
+        row_width=[0.25, 0.25, 0.25])
     
-    # df['cases'] =calc_7_day_average(df['cases'])
-    # df['admissions'] = calc_7_day_average(df['admissions'])
-    # df['deaths']= calc_7_day_average(df['deaths'])
-    
-    # df['vcases']=df['vcases'].replace(0, np.nan).interpolate(method ='linear', limit_direction ='forward')
-    # df['vadmissions']=df['vadmissions'].replace(0, np.nan).interpolate(method ='linear', limit_direction ='forward')
-    # df['vdeaths']=df['vdeaths'].replace(0, np.nan).interpolate(method ='linear', limit_direction ='forward')
-
-    # df['vcases']=calc_7_day_average(df['vcases'])
-    # df['vadmissions']=calc_7_day_average(df['vadmissions'])
-    # df['vdeaths']=calc_7_day_average(df['vdeaths'])
-
     fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['cases'],
                              name="max cases", 
                              line=dict({'width': 1, 'color': 'orange'})),
@@ -238,9 +230,18 @@ def plot2(min, mean, max, df):
                              name="min cases",
                              line=dict({'width': 1, 'color': 'crimson'})),
                 row=1, col=1)
-    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vcases'],
-                             name="vcases", line=dict({'width': 2, 'color': 'red'})),
-                row=2, col=1)
+
+    # fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vcases'],
+    #                          name="vcases", line=dict({'width': 1.5, 'color': 'red', 'dash':'dot'})),
+    #             secondary_y=True,
+    #             row=1, col=1)
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vcases'], line_shape="linear",
+                             name="vcases", line=dict({'width': 1.5, 'color': 'red', 'dash':'dot'})),
+                secondary_y=True,
+                row=1, col=1)
+    # fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vcases'],
+    #                          name="vcases", line=dict({'width': 2, 'color': 'red'})),
+    #             row=2, col=1)
     # fig.add_trace(go.Bar(x=df['date'], y=df['vcases'],
     #                          name="vcases"),
     #             row=2, col=1)
@@ -250,32 +251,48 @@ def plot2(min, mean, max, df):
     #             row=3, col=1)
     fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['admissions'],
                              name="max admissions", line=dict({'width': 1, 'color': 'palegreen'})),
-                row=3, col=1)
+                row=2, col=1)
     fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['admissions'],
                              name="mean admissions", line=dict({'width': 2, 'color': 'green'})),
-                row=3, col=1)
+                row=2, col=1)
     fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['admissions'],
                              name="min admissions", line=dict({'width': 1, 'color': 'seagreen'})),
-                row=3, col=1)
-    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vadmissions'],
-                             name="actual admissions", line=dict({'width': 2, 'color': 'green'})), 
-                row=4, col=1)
-
+                row=2, col=1)
+    # fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vadmissions'],
+    #                          name="actual admissions", line=dict({'width': 1.5, 'color': 'green', 'dash':'dot'})),
+    #             secondary_y=True,
+    #             row=2, col=1)
+    fig.add_trace(go.Scatter(mode='lines',x=df['date'], y=df['vadmissions'],line_shape="linear",
+                             name="actual admissions", line=dict({'width': 1.5, 'color': 'green', 'dash':'dot'})),
+                secondary_y=True,
+                row=2, col=1)
+    # fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vadmissions'],
+    #                          name="actual admissions", line=dict({'width': 2, 'color': 'green'})), 
+    #             row=4, col=1)
     # fig.add_trace(go.Scatter( fill='tozeroy', x=df['date'], y=df['deaths'],
     #                          name="deaths", line=dict({'width': 2, 'color': 'black'})), 
     #             row=5, col=1)
     fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['deaths'],
                              name="max deaths", line=dict({'width': 1, 'color': 'grey'})), 
-                row=5, col=1)
+                row=3, col=1)
     fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['deaths'],
-                             name="mean deaths", line=dict({'width': 2, 'color': 'darkgrey'})), 
-                row=5, col=1)
+                             name="mean deaths", line=dict({'width': 2, 'color': 'darkgrey'})),
+                row=3, col=1)
     fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['deaths'],
-                             name="min deaths", line=dict({'width': 1, 'color': 'black'})), 
-                row=5, col=1)
-    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vdeaths'],
-                             name="actual deaths", line=dict({'width': 2, 'color': 'black'})), 
-                row=6, col=1)
+                             name="min deaths", line=dict({'width': 1, 'color': 'black'})),
+                row=3, col=1)
+    # fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vdeaths'],
+    #                          name="actual deaths", line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
+    #             secondary_y=True,
+    #             row=3, col=1)
+    fig.add_trace(go.Scatter(mode='lines',x=df['date'], y=df['vdeaths'],line_shape="linear",
+                             name="actual deaths", line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
+                
+                secondary_y=True,
+                row=3, col=1)
+    # fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vdeaths'],
+    #                          name="actual deaths", line=dict({'width': 2, 'color': 'black'})), 
+    #             row=6, col=1)
     # df['vdeaths2']=df['vdeaths'].rolling(window=7).mean()
     # fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vdeaths2'],
     #                          name="actual deaths-7dayAverage", line=dict({'width': 1, 'color': 'black', 'dash': 'dot'})), 
@@ -290,7 +307,6 @@ def plot2(min, mean, max, df):
 
     #fig.show()
     return fig
-    return fig
 
 def plot_age2(df):
     sub_groups = ['Cases (>65)', 'Cases (18~65)', 'Cases (1~18)', 'Actual cases', 
@@ -304,16 +320,6 @@ def plot_age2(df):
         horizontal_spacing=0.05,
         row_width=[0.25, 0.25,0.25],
         column_width=[0.25, 0.25, 0.25, 0.25])
-
-    # df['cases_65']=calc_7_day_average(df['cases_65'])
-    # df['cases_18']=calc_7_day_average(df['cases_65'])
-    # df['cases_1']=calc_7_day_average(df['cases_1'])
-    # df['admissions_65']=calc_7_day_average(df['admissions_65'])
-    # df['admissions_18']=calc_7_day_average(df['admissions_18'])
-    # df['admissions_1']=calc_7_day_average(df['admissions_1'])
-    # df['deaths_65']=calc_7_day_average(df['deaths_65'])
-    # df['deaths_18']=calc_7_day_average(df['deaths_18'])
-    # df['deaths_1']=calc_7_day_average(df['deaths_1'])
 
     fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['cases_65'], 
                             #stackgroup='one', groupnorm='percent',
