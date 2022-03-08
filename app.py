@@ -213,9 +213,7 @@ def plot2(min, mean, max, df):
         subplot_titles=sub_groups, 
         shared_xaxes=True, 
         specs=[[{"secondary_y": True}],[{"secondary_y": True}],[{"secondary_y": True}]],
-        #specs=[[{"secondary_y": True}],[{"secondary_y": False}],[{"secondary_y": True}],[{"secondary_y": False}],[{"secondary_y": True}],[{"secondary_y": False}],],
         vertical_spacing = 0.05,
-        #row_width=[0.15, 0.2, 0.15, 0.25, 0.15, 0.25])
         row_width=[0.25, 0.25, 0.25])
     
     fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['cases'],
@@ -231,24 +229,12 @@ def plot2(min, mean, max, df):
                              line=dict({'width': 1, 'color': 'crimson'})),
                 row=1, col=1)
 
-    # fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vcases'],
-    #                          name="vcases", line=dict({'width': 1.5, 'color': 'red', 'dash':'dot'})),
-    #             secondary_y=True,
-    #             row=1, col=1)
-    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vcases'], line_shape="linear",
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vcases'], 
+                            line_shape="linear",
                              name="vcases", line=dict({'width': 1.5, 'color': 'red', 'dash':'dot'})),
                 secondary_y=True,
                 row=1, col=1)
-    # fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vcases'],
-    #                          name="vcases", line=dict({'width': 2, 'color': 'red'})),
-    #             row=2, col=1)
-    # fig.add_trace(go.Bar(x=df['date'], y=df['vcases'],
-    #                          name="vcases"),
-    #             row=2, col=1)
 
-    # fig.add_trace(go.Scatter( fill='tozeroy', x=df['date'], y=df['admissions'],
-    #                          name="admissions", line=dict({'width': 2, 'color': 'green'})),
-    #             row=3, col=1)
     fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['admissions'],
                              name="max admissions", line=dict({'width': 1, 'color': 'palegreen'})),
                 row=2, col=1)
@@ -258,20 +244,12 @@ def plot2(min, mean, max, df):
     fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['admissions'],
                              name="min admissions", line=dict({'width': 1, 'color': 'seagreen'})),
                 row=2, col=1)
-    # fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vadmissions'],
-    #                          name="actual admissions", line=dict({'width': 1.5, 'color': 'green', 'dash':'dot'})),
-    #             secondary_y=True,
-    #             row=2, col=1)
+
     fig.add_trace(go.Scatter(mode='lines',x=df['date'], y=df['vadmissions'],line_shape="linear",
                              name="actual admissions", line=dict({'width': 1.5, 'color': 'green', 'dash':'dot'})),
                 secondary_y=True,
                 row=2, col=1)
-    # fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vadmissions'],
-    #                          name="actual admissions", line=dict({'width': 2, 'color': 'green'})), 
-    #             row=4, col=1)
-    # fig.add_trace(go.Scatter( fill='tozeroy', x=df['date'], y=df['deaths'],
-    #                          name="deaths", line=dict({'width': 2, 'color': 'black'})), 
-    #             row=5, col=1)
+
     fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['deaths'],
                              name="max deaths", line=dict({'width': 1, 'color': 'grey'})), 
                 row=3, col=1)
@@ -281,22 +259,10 @@ def plot2(min, mean, max, df):
     fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['deaths'],
                              name="min deaths", line=dict({'width': 1, 'color': 'black'})),
                 row=3, col=1)
-    # fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vdeaths'],
-    #                          name="actual deaths", line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
-    #             secondary_y=True,
-    #             row=3, col=1)
     fig.add_trace(go.Scatter(mode='lines',x=df['date'], y=df['vdeaths'],line_shape="linear",
                              name="actual deaths", line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
-                
                 secondary_y=True,
                 row=3, col=1)
-    # fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vdeaths'],
-    #                          name="actual deaths", line=dict({'width': 2, 'color': 'black'})), 
-    #             row=6, col=1)
-    # df['vdeaths2']=df['vdeaths'].rolling(window=7).mean()
-    # fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vdeaths2'],
-    #                          name="actual deaths-7dayAverage", line=dict({'width': 1, 'color': 'black', 'dash': 'dot'})), 
-    #             row=6, col=1)
 
     fig.update_xaxes(showline=True, linewidth=1, linecolor='black', mirror=True, ticklabelmode="period", dtick="M1")
     fig.update_yaxes(showline=True, linewidth=1, linecolor='black', mirror=True)
@@ -312,92 +278,114 @@ def plot_age2(df):
     sub_groups = ['Cases (>65)', 'Cases (18~65)', 'Cases (1~18)', 'Actual cases', 
                 'Admissions (>65)', 'Admissions (18~65)', 'Admissions (1~18)', 'Actual admissions',
                 'Deaths (>65)', 'Deaths (18~65)', 'Deaths (1~18)', 'Actual deaths',]
-    fig = make_subplots(rows=3, cols=4, 
+    fig = make_subplots(rows=3, cols=3, 
         subplot_titles=sub_groups, 
         shared_xaxes=True,
         shared_yaxes=True, # use same y axis range
+        specs=[[{"secondary_y": True},{"secondary_y": True},{"secondary_y": True}],
+               [{"secondary_y": True},{"secondary_y": True},{"secondary_y": True}],
+               [{"secondary_y": True},{"secondary_y": True},{"secondary_y": True}],
+               ],
         vertical_spacing=0.1,
         horizontal_spacing=0.05,
         row_width=[0.25, 0.25,0.25],
-        column_width=[0.25, 0.25, 0.25, 0.25])
+        column_width=[0.25, 0.25, 0.25])
 
-    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['cases_65'], 
-                            #stackgroup='one', groupnorm='percent',
-                            fill='tozeroy',
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['cases_65'], line_shape="linear",
                              name="cases >65", 
                              line=dict(width=0.5, color='crimson')), 
                 row=1, col=1)
-    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['cases_18'], 
-                            #stackgroup='one', groupnorm='percent',
-                            fill='tozeroy',
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vcases'], line_shape="linear",
+                            #line_shape="linear",
+                             name="actual cases", 
+                             line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})), 
+                secondary_y=True,
+                row=1, col=1)
+
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['cases_18'], line_shape="linear",
                              name="cases >18", 
                              line=dict(width=0.5, color='red')), 
                 row=1, col=2)
-    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['cases_1'], 
-                            #stackgroup='one', groupnorm='percent',
-                            fill='tozeroy',
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vcases'], line_shape="linear",
+                            #line_shape="linear",
+                             name="actual cases", 
+                             line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})), 
+                secondary_y=True,
+                row=1, col=2)
+                
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['cases_1'], line_shape="linear",
                              name="cases >1", 
                              line=dict(width=0.5, color='indianred')), 
                 row=1, col=3)
-    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vcases'],
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vcases'], line_shape="linear",
+                            #line_shape="linear",
                              name="actual cases", 
-                             line=dict({'width': 2, 'color': 'red'})), 
-                row=1, col=4)
+                             line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})), 
+                secondary_y=True,
+                row=1, col=3)
+    fig.update_xaxes(color="red")
     # -------------------------------------------------------------------------------------------------------------------
-    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['admissions_65'], 
-                            #stackgroup='two', groupnorm='percent',
-                            fill='tozeroy',
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['admissions_65'], line_shape="linear",
                              name="admissions >65", 
                              line=dict(width=0.5, color='seagreen')), 
                 row=2, col=1)
-    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['admissions_18'], 
-                            #stackgroup='two', groupnorm='percent',
-                            fill='tozeroy',
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vadmissions'], line_shape="linear",
+                             name="actual admissions", 
+                             line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
+                secondary_y=True,
+                row=2, col=1)
+
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['admissions_18'], line_shape="linear",
                              name="admissions >18", 
                              line=dict(width=0.5, color='green')), 
                 row=2, col=2)
-    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['admissions_1'], 
-                            #stackgroup='two', groupnorm='percent',
-                            fill='tozeroy',
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vadmissions'], line_shape="linear",
+                             name="actual admissions", 
+                             line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
+                secondary_y=True,
+                row=2, col=2)
+
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['admissions_1'], line_shape="linear",
                              name="admissions >1", 
                              line=dict(width=0.5, color='limegreen')), 
                 row=2, col=3)
-    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vadmissions'],
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vadmissions'], line_shape="linear",
                              name="actual admissions", 
-                             line=dict({'width': 2, 'color': 'green'})),
-                row=2, col=4)
-
+                             line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
+                secondary_y=True,
+                row=2, col=3)
+    fig.update_xaxes(color="red")
     # -------------------------------------------------------------------------------------------------------------------
-    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['deaths_65'], 
-                            #stackgroup='three', groupnorm='percent',
-                            fill='tozeroy',
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['deaths_65'], line_shape="linear",
                              name="deaths >65", 
                              line=dict(width=0.5, color='slategrey')), 
                 row=3, col=1)
-    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['deaths_18'], 
-                            #stackgroup='three', groupnorm='percent',
-                            fill='tozeroy',
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vdeaths'], line_shape="linear",
+                             name="actual deaths", 
+                             line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
+                secondary_y=True,
+                row=3, col=1)
+
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['deaths_18'], line_shape="linear",
                              name="deaths >18", 
                              line=dict(width=0.5, color='slategrey')), 
                 row=3, col=2)
-    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['deaths_1'], 
-                            #stackgroup='three', groupnorm='percent',
-                            fill='tozeroy',
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vdeaths'], line_shape="linear",
+                             name="actual deaths", 
+                             line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
+                secondary_y=True,
+                row=3, col=2)
+
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['deaths_1'], line_shape="linear",
                              name="deaths >1", 
                              line=dict(width=0.5, color='slategrey')), 
                 row=3, col=3)
-    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vdeaths'],
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vdeaths'], line_shape="linear",
                              name="actual deaths", 
-                             line=dict({'width': 2, 'color': 'black'})),
-                row=3, col=4)
-    # # percentage
-    # fig.update_layout(
-    #     showlegend=True,
-    #     xaxis_type='category',
-    #     yaxis=dict(
-    #         type='linear',
-    #         range=[1, 100],
-    #         ticksuffix='%'))
+                             line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
+                secondary_y=True,
+                row=3, col=3)
+
     fig.update_xaxes(showline=True, linewidth=1, linecolor='black', mirror=True, ticklabelmode="period", dtick="M1")
     fig.update_yaxes(showline=True, linewidth=1, linecolor='black', mirror=True)
     fig.update_layout(showlegend=True, 
