@@ -38,7 +38,15 @@ from flask_caching import Cache
 import numbers
 
 folder_name=""
+"""
+scaling factors
 
+Imran says: Due to computation limit, there's no interaction between ZIPCODES. 
+So simulated results of cases/admissions/deaths becomes over-estimated. So that's why using scaling factors here.
+In future, logics of calibration will be applied instead to address this issue.
+"""
+SF1=10
+SF2=2 
 #import vaex
 
 # import pymongo
@@ -123,8 +131,8 @@ path = os.path.join('..', 'ABM-simulator', 'SimulationEngine', 'output', folder_
 
 print(path)
 
-SF1 = 22
-SF2 = 5
+# SF1 = 22
+# SF2 = 5
 
 #CHUNK_SIZE1=2000000
 #CHUNK_SIZE2=2000000
@@ -203,7 +211,11 @@ def calc_mean(df):
     df=df.transpose()
     df = df.groupby(by=df.index, axis=0).apply(lambda g: g.mean() if isinstance(g.iloc[0,0], numbers.Number) else g.iloc[0])
     return df.transpose()
-    
+
+# to smooth spotty data by connecting peaks
+def upper_envelope(df, windowsize=20):
+    return df.rolling(window=windowsize).max().shift(int(-windowsize/2))
+
 def plot2(min, mean, max, df):
     # Create figure
     fig = go.Figure()
@@ -218,52 +230,58 @@ def plot2(min, mean, max, df):
         specs=[[{"secondary_y": True}],[{"secondary_y": True}],[{"secondary_y": True}]],
         vertical_spacing = 0.05,
         row_width=[0.25, 0.25, 0.25])
+
+    df['vcases'] = upper_envelope(df['vcases'],7)
     
-    fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['cases'],
+    fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['cases']/SF1,line_shape="linear",
                              name="max cases", 
                              line=dict({'width': 1, 'color': 'orange'})),
                 row=1, col=1)
-    fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['cases'],
+    fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['cases']/SF1,line_shape="linear",
                              name="mean cases", 
                              line=dict({'width': 2, 'color': 'red'})),
                 row=1, col=1)
-    fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['cases'],
+    fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['cases']/SF1,line_shape="linear",
                              name="min cases",
                              line=dict({'width': 1, 'color': 'crimson'})),
                 row=1, col=1)
-
-    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vcases'], 
-                            line_shape="linear",
-                             name="vcases", line=dict({'width': 1.5, 'color': 'red', 'dash':'dot'})),
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vcases'],line_shape="linear",
+                             name="vcases", 
+                             #line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
+                             line=dict({'width': 1.5, 'color': 'black'})),
                 secondary_y=True,
                 row=1, col=1)
-
-    fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['admissions'],
+    df['vadmissions'] = upper_envelope(df['vadmissions'],7)
+    fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['admissions']/SF1,line_shape="linear",
                              name="max admissions", line=dict({'width': 1, 'color': 'palegreen'})),
                 row=2, col=1)
-    fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['admissions'],
+    fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['admissions']/SF1,line_shape="linear",
                              name="mean admissions", line=dict({'width': 2, 'color': 'green'})),
                 row=2, col=1)
-    fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['admissions'],
+    fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['admissions']/SF1,line_shape="linear",
                              name="min admissions", line=dict({'width': 1, 'color': 'seagreen'})),
                 row=2, col=1)
 
     fig.add_trace(go.Scatter(mode='lines',x=df['date'], y=df['vadmissions'],line_shape="linear",
-                             name="actual admissions", line=dict({'width': 1.5, 'color': 'green', 'dash':'dot'})),
+                             name="actual admissions", 
+                             #line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
+                             line=dict({'width': 1.5, 'color': 'black'})),
                 secondary_y=True,
                 row=2, col=1)
-
-    fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['deaths'],
-                             name="max deaths", line=dict({'width': 1, 'color': 'grey'})), 
+    df['vdeaths'] = upper_envelope(df['vdeaths'],10)
+    fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['deaths'],line_shape="linear",
+                             name="max deaths", line=dict({'width': 1, 'color': 'lightgrey'})), 
                 row=3, col=1)
-    fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['deaths'],
+    fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['deaths'],line_shape="linear",
                              name="mean deaths", line=dict({'width': 2, 'color': 'darkgrey'})),
                 row=3, col=1)
-    fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['deaths'],
-                             name="min deaths", line=dict({'width': 1, 'color': 'black'})),
+    fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['deaths'],line_shape="linear",
+                             name="min deaths", line=dict({'width': 1, 'color': 'grey'})),
                 row=3, col=1)
     fig.add_trace(go.Scatter(mode='lines',x=df['date'], y=df['vdeaths'],line_shape="linear",
-                             name="actual deaths", line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
+                             name="actual deaths", 
+                             #line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
+                             line=dict({'width': 1.5, 'color': 'black'})),
                 secondary_y=True,
                 row=3, col=1)
 
