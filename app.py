@@ -46,7 +46,9 @@ So simulated results of cases/admissions/deaths becomes over-estimated. So that'
 In future, logics of calibration will be applied instead to address this issue.
 """
 SF1=0.025 # x4
-SF2=2
+SF2=5
+
+SF_admission=1.4
 #import vaex
 
 # import pymongo
@@ -215,7 +217,7 @@ def calc_mean(df):
 # to smooth spotty data by connecting peaks
 def upper_envelope(df, windowsize=20):
     return df.rolling(window=windowsize).max().shift(int(-windowsize/2))
-
+'''    
 def plot2(min, mean, max, df):
     # Create figure
     fig = go.Figure()
@@ -283,6 +285,85 @@ def plot2(min, mean, max, df):
                              #line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
                              line=dict({'width': 1.5, 'color': 'black'})),
                 secondary_y=True,
+                row=3, col=1)
+
+    fig.update_xaxes(showline=True, linewidth=1, linecolor='black', mirror=True, ticklabelmode="period", dtick="M1")
+    fig.update_yaxes(showline=True, linewidth=1, linecolor='black', mirror=True)
+    fig.update_layout(showlegend=True, autosize=True, 
+                    #width=900, height=800,
+                    legend=dict(orientation="h",x=0, y=-0.1, traceorder="normal"),
+                      font=dict(family="Arial", size=11))
+
+    #fig.show()
+    return fig
+'''
+def plot2(min, mean, max):
+    # Create figure
+    fig = go.Figure()
+
+    sub_groups = ['Simulated cases', #'Actual cases', 
+                'Simulated admissions', #'Actual admissions', 
+                'Simulated deaths', #'Actual deaths'
+                ]
+    fig = make_subplots(rows=3, cols=1, 
+        subplot_titles=sub_groups, 
+        shared_xaxes=True, 
+        specs=[[{"secondary_y": True}],[{"secondary_y": True}],[{"secondary_y": True}]],
+        vertical_spacing = 0.05,
+        row_width=[0.25, 0.25, 0.25])
+
+    # df['vcases'] = upper_envelope(df['vcases'],7)
+    # df['vadmissions'] = upper_envelope(df['vadmissions'],7)
+    # df['vdeaths'] = upper_envelope(df['vdeaths'],10)
+    
+    fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['cases']/SF2,line_shape="linear",
+                             name="max cases", 
+                             line=dict({'width': 1, 'color': 'orange'})),
+                row=1, col=1)
+    fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['cases']/SF2,line_shape="linear",
+                             name="mean cases", 
+                             line=dict({'width': 2, 'color': 'red'})),
+                row=1, col=1)
+    fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['cases']/SF2,line_shape="linear",
+                             name="min cases",
+                             line=dict({'width': 1, 'color': 'crimson'})),
+                row=1, col=1)
+    fig.add_trace(go.Scatter(mode='lines', x=mean['date'], y=mean['vcases'],line_shape="linear",
+                             name="vcases", 
+                             #line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
+                             line=dict({'width': 1.5, 'color': 'black'})),
+                #secondary_y=True,
+                row=1, col=1)
+    fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['admissions']/SF_admission,line_shape="linear",
+                             name="max admissions", line=dict({'width': 1, 'color': 'palegreen'})),
+                row=2, col=1)
+    fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['admissions']/SF_admission,line_shape="linear",
+                             name="mean admissions", line=dict({'width': 2, 'color': 'green'})),
+                row=2, col=1)
+    fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['admissions']/SF_admission,line_shape="linear",
+                             name="min admissions", line=dict({'width': 1, 'color': 'seagreen'})),
+                row=2, col=1)
+
+    fig.add_trace(go.Scatter(mode='lines',x=mean['date'], y=mean['vadmissions'],line_shape="linear",
+                             name="actual admissions", 
+                             #line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
+                             line=dict({'width': 1.5, 'color': 'black'})),
+                #secondary_y=True,
+                row=2, col=1)
+    fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['deaths']/SF2,line_shape="linear",
+                             name="max deaths", line=dict({'width': 1, 'color': 'lightgrey'})), 
+                row=3, col=1)
+    fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['deaths']/SF2,line_shape="linear",
+                             name="mean deaths", line=dict({'width': 2, 'color': 'darkgrey'})),
+                row=3, col=1)
+    fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['deaths']/SF2,line_shape="linear",
+                             name="min deaths", line=dict({'width': 1, 'color': 'grey'})),
+                row=3, col=1)
+    fig.add_trace(go.Scatter(mode='lines',x=mean['date'], y=mean['vdeaths'],line_shape="linear",
+                             name="actual deaths", 
+                             #line=dict({'width': 1.5, 'color': 'black', 'dash':'dot'})),
+                             line=dict({'width': 1.5, 'color': 'black'})),
+                #secondary_y=True,
                 row=3, col=1)
 
     fig.update_xaxes(showline=True, linewidth=1, linecolor='black', mirror=True, ticklabelmode="period", dtick="M1")
@@ -938,6 +1019,7 @@ def load_SEIR(mode):
 
         print('All plots-Loading completed!')
         plotdf = pd.concat(dlist, axis=1)
+
         dates = dlist[0]['date'].tolist()
         #####plotdf.drop('date', axis=1, inplace=True)
 
@@ -951,9 +1033,6 @@ def load_SEIR(mode):
         mean['date'] = dates
         min['date'] = dates
 
-        plotdf=plotdf.groupby(plotdf.columns, axis=1).sum()
-        plotdf['date']= dlist[0]['date'].tolist()
-        df2 =pd.DataFrame(plotdf, columns=['date', 'cases', 'deaths','admissions', 'vcases', 'vdeaths', 'vadmissions'])
         # # temporary solutions for empty vcases/vdeaths/vadmissions
         # if set(['vcases','vdeaths', 'vadmissions']).issubset(df2.columns) is False:
         #     df2['vcases']=df2['cases']
@@ -963,7 +1042,13 @@ def load_SEIR(mode):
         #print('Loading completed!')
         
         #return plot(min, mean, max)
-        return plot2(min, mean, max, df2)
+        
+        return plot2(min, mean, max)
+
+        # plotdf=plotdf.groupby(plotdf.columns, axis=1).sum()
+        # plotdf['date']= dlist[0]['date'].tolist()
+        # df2 =pd.DataFrame(plotdf, columns=['date', 'cases', 'deaths','admissions', 'vcases', 'vdeaths', 'vadmissions'])
+        #return plot2(min, mean, max, df2)
 
     else:
         dlist = []
@@ -976,19 +1061,19 @@ def load_SEIR(mode):
                     d['chunk'] = no
                     dlist.append(d)
 
-        plotdf = pd.concat(dlist, axis=1)
-        dates = dlist[0]['date'].tolist()
-        #####plotdf.drop('date', axis=1, inplace=True)
+        # plotdf = pd.concat(dlist, axis=1)
+        # dates = dlist[0]['date'].tolist()
+        # #####plotdf.drop('date', axis=1, inplace=True)
 
-        max = plotdf.groupby(plotdf.columns, axis=1).max()
-        #mean = plotdf.groupby(plotdf.columns, axis=1).mean() # error! return 0s ... use transpose() for fix
-        df2=plotdf.transpose()
-        df2 = df2.groupby(by=df2.index, axis=0).apply(lambda g: g.mean() if isinstance(g.iloc[0,0], numbers.Number) else g.iloc[0])
-        plotdf = df2.transpose() # same as "mean" above
+        # max = plotdf.groupby(plotdf.columns, axis=1).max()
+        # #mean = plotdf.groupby(plotdf.columns, axis=1).mean() # error! return 0s ... use transpose() for fix
+        # df2=plotdf.transpose()
+        # df2 = df2.groupby(by=df2.index, axis=0).apply(lambda g: g.mean() if isinstance(g.iloc[0,0], numbers.Number) else g.iloc[0])
+        # plotdf = df2.transpose() # same as "mean" above
         print('Filtered plots-Loading completed!')
-        # plotdf = pd.concat(dlist)
-        # plotdf = plotdf.sort_values(by='date')
-        # # temporary solutions for empty vcases/vdeaths/vadmissions
+        plotdf = pd.concat(dlist)
+        plotdf = plotdf.sort_values(by='date')
+        # temporary solutions for empty vcases/vdeaths/vadmissions
         # if set(['vcases','vdeaths', 'vadmissions']).issubset(plotdf.columns)==False:
         #     plotdf['vcases']=plotdf['cases']
         #     plotdf['vdeaths']=plotdf['deaths']
