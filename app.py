@@ -161,6 +161,8 @@ zipcode_for_all="33510"
 sampling_for_all=0.25 # 0.5=50%
 show_whole_county=False
 
+filter_type="All cases" #id=filter_type's values
+
 heatmap_size=0
 scatter_size=0
 
@@ -223,24 +225,25 @@ def plot2(min, mean, max):
     # Create figure
     fig = go.Figure()
 
-    sub_groups = ['Simulated cases', #'Actual cases', 
-                'Simulated admissions', #'Actual admissions', 
-                'Simulated deaths', #'Actual deaths'
+    sub_groups = ['Cases', #'Actual cases', 
+                'Admissions', #'Actual admissions', 
+                'Deaths', #'Actual deaths'
+                '(Accumulated) Deaths', #'Actual deaths'
                 ]
-    fig = make_subplots(rows=3, cols=1, 
+    fig = make_subplots(rows=4, cols=1, 
         subplot_titles=sub_groups, 
         shared_xaxes=True, 
-        specs=[[{"secondary_y": True}],[{"secondary_y": True}],[{"secondary_y": True}]],
+        #specs=[[{"secondary_y": True}],[{"secondary_y": True}],[{"secondary_y": True}]],
         vertical_spacing = 0.05,
-        row_width=[0.25, 0.25, 0.25])
+        row_width=[0.2, 0.2, 0.25, 0.25])
 
     mean['vcases']=upper_envelope(mean['vcases'], 7)
     mean['vadmissions']=upper_envelope(mean['vadmissions'], 7)
     #mean['vdeaths']=upper_envelope(mean['vdeaths'], 7)
-    min['deaths']=min['deaths'].cumsum()
-    max['deaths']=max['deaths'].cumsum()
-    mean['deaths']=mean['deaths'].cumsum()
-    mean['vdeaths']=mean['vdeaths'].cumsum()
+    min['deaths_cumsum']=min['deaths'].cumsum()
+    max['deaths_cumsum']=max['deaths'].cumsum()
+    mean['deaths_cumsum']=mean['deaths'].cumsum()
+    mean['vdeaths_cumsum']=mean['vdeaths'].cumsum()
   
     fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['cases']/SF_cases,
                              name="max cases", 
@@ -297,12 +300,30 @@ def plot2(min, mean, max):
                              #line=dict({'width': 0.5, 'color': 'black'})),
                 #secondary_y=True,
                 row=3, col=1)
-
+                
+    fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['deaths_cumsum']/SF_deaths,
+                             name="max deaths", 
+                             line=dict({'width': 1, 'color': 'darkgrey'})), 
+                row=4, col=1)
+    fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['deaths_cumsum']/SF_deaths,
+                             name="mean deaths", 
+                             line=dict({'width': 1, 'color': 'black'})),
+                row=4, col=1)
+    fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['deaths_cumsum']/SF_deaths,
+                             name="min deaths", 
+                             line=dict({'width': 1, 'color': 'darkgrey'})),
+                row=4, col=1)
+    fig.add_trace(go.Scatter(mode='lines',x=mean['date'], y=mean['vdeaths_cumsum'],
+                             name="actual deaths", 
+                             line=dict({'width': 1, 'color': 'black', 'dash':'dot'})),
+                             #line=dict({'width': 0.5, 'color': 'black'})),
+                #secondary_y=True,
+                row=4, col=1)
     fig.update_xaxes(showline=True, linewidth=1, linecolor='black', mirror=True, ticklabelmode="period", dtick="M1")
     fig.update_yaxes(showline=True, linewidth=1, linecolor='black', mirror=True)
     fig.update_layout(showlegend=True, autosize=True, 
                     #width=900, height=800,
-                    legend=dict(orientation="h",x=0, y=-0.1, traceorder="normal"),
+                    #legend=dict(orientation="h",x=0, y=-0.1, traceorder="normal"),
                       font=dict(family="Arial", size=11))
 
     #fig.show()
@@ -507,33 +528,33 @@ def plot_race2(df):
     fig = make_subplots(rows=6, cols=3, 
         subplot_titles=sub_groups, 
         shared_xaxes=True,
-        shared_yaxes=True, # use same y axis range
+        shared_yaxes='columns', # use same y axis range
         vertical_spacing=0.05,
         horizontal_spacing=0.05,
         #column_width=[0.25, 0.25,0.25,0.25,0.25],
         row_width=[0.1, 0.25, 0.25, 0.25, 0.25, 0.25,]
         )
-    df['cases_white'] = upper_envelope(df['cases_white'],7)
-    df['cases_black'] = upper_envelope(df['cases_black'],7)
-    df['cases_asian'] = upper_envelope(df['cases_asian'],7)
-    df['cases_other'] = upper_envelope(df['cases_other'],7)
-    df['cases_two'] = upper_envelope(df['cases_two'],7)
-    #df['vcases'] = upper_envelope(df['vcases'],7)
-    df['admissions_white'] = upper_envelope(df['admissions_white'],7)
-    df['admissions_black'] = upper_envelope(df['admissions_black'],7)
-    df['admissions_asian'] = upper_envelope(df['admissions_asian'],7)
-    df['admissions_other'] = upper_envelope(df['admissions_other'],7)
-    df['admissions_two'] = upper_envelope(df['admissions_two'],7)
-    max_case=np.max(df['vcases'])
-    max_admission=np.max(df['vadmissions'])
-    median_death=np.median(df['vdeaths'])
-    #df['vadmissions'] = upper_envelope(df['vadmissions'],7)
-    df['deaths_white'] = upper_envelope(df['deaths_white'],10)
-    df['deaths_black'] = upper_envelope(df['deaths_black'],10)
-    df['deaths_asian'] = upper_envelope(df['deaths_asian'],10)
-    df['deaths_other'] = upper_envelope(df['deaths_other'],10)
-    df['deaths_two'] = upper_envelope(df['deaths_two'],10)
-    #df['vdeaths'] = upper_envelope(df['vdeaths'],10)
+    # df['cases_white'] = upper_envelope(df['cases_white'],7)
+    # df['cases_black'] = upper_envelope(df['cases_black'],7)
+    # df['cases_asian'] = upper_envelope(df['cases_asian'],7)
+    # df['cases_other'] = upper_envelope(df['cases_other'],7)
+    # df['cases_two'] = upper_envelope(df['cases_two'],7)
+    # #df['vcases'] = upper_envelope(df['vcases'],7)
+    # df['admissions_white'] = upper_envelope(df['admissions_white'],7)
+    # df['admissions_black'] = upper_envelope(df['admissions_black'],7)
+    # df['admissions_asian'] = upper_envelope(df['admissions_asian'],7)
+    # df['admissions_other'] = upper_envelope(df['admissions_other'],7)
+    # df['admissions_two'] = upper_envelope(df['admissions_two'],7)
+    # max_case=np.max(df['vcases'])
+    # max_admission=np.max(df['vadmissions'])
+    # median_death=np.median(df['vdeaths'])
+    # #df['vadmissions'] = upper_envelope(df['vadmissions'],7)
+    # df['deaths_white'] = upper_envelope(df['deaths_white'],10)
+    # df['deaths_black'] = upper_envelope(df['deaths_black'],10)
+    # df['deaths_asian'] = upper_envelope(df['deaths_asian'],10)
+    # df['deaths_other'] = upper_envelope(df['deaths_other'],10)
+    # df['deaths_two'] = upper_envelope(df['deaths_two'],10)
+    # #df['vdeaths'] = upper_envelope(df['vdeaths'],10)
     fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['cases_white']/SF_cases,
                             name="cases (white)",  
                             fill='tozeroy',
@@ -673,33 +694,33 @@ def plot_FPL2(df):
     fig = make_subplots(rows=6, cols=3, 
         subplot_titles=sub_groups, 
         shared_xaxes=True,
-        shared_yaxes=True, # use same y axis range
+        shared_yaxes='columns', # use same y axis range
         vertical_spacing=0.05,
         horizontal_spacing=0.05,
        # column_width=[0.25, 0.25,0.25,0.25,0.25],
         row_width=[0.1, 0.25, 0.25, 0.25, 0.25, 0.25,]
     )
-    df['cases_0-100'] = upper_envelope(df['cases_0-100'],7)
-    df['cases_100-150'] = upper_envelope(df['cases_100-150'],7)
-    df['cases_150-175'] = upper_envelope(df['cases_150-175'],7)
-    df['cases_175-200'] = upper_envelope(df['cases_175-200'],7)
-    df['cases_200-1800'] = upper_envelope(df['cases_200-1800'],7)
-    #df['vcases'] = upper_envelope(df['vcases'],7)
-    df['admissions_0-100'] = upper_envelope(df['admissions_0-100'],7)
-    df['admissions_100-150'] = upper_envelope(df['admissions_100-150'],7)
-    df['admissions_150-175'] = upper_envelope(df['admissions_150-175'],7)
-    df['admissions_175-200'] = upper_envelope(df['admissions_175-200'],7)
-    df['admissions_200-1800'] = upper_envelope(df['admissions_200-1800'],7)
-    max_case=np.max(df['vcases'])
-    max_admission=np.max(df['vadmissions'])
-    median_death=np.median(df['vdeaths'])
-    #df['vadmissions'] = upper_envelope(df['vadmissions'],7)
-    df['deaths_0-100'] = upper_envelope(df['deaths_0-100'],10)
-    df['deaths_100-150'] = upper_envelope(df['deaths_100-150'],10)
-    df['deaths_150-175'] = upper_envelope(df['deaths_150-175'],10)
-    df['deaths_175-200'] = upper_envelope(df['deaths_175-200'],10)
-    df['deaths_200-1800'] = upper_envelope(df['deaths_200-1800'],10)
-    #df['vdeaths'] = upper_envelope(df['vdeaths'],10)
+    # df['cases_0-100'] = upper_envelope(df['cases_0-100'],7)
+    # df['cases_100-150'] = upper_envelope(df['cases_100-150'],7)
+    # df['cases_150-175'] = upper_envelope(df['cases_150-175'],7)
+    # df['cases_175-200'] = upper_envelope(df['cases_175-200'],7)
+    # df['cases_200-1800'] = upper_envelope(df['cases_200-1800'],7)
+    # #df['vcases'] = upper_envelope(df['vcases'],7)
+    # df['admissions_0-100'] = upper_envelope(df['admissions_0-100'],7)
+    # df['admissions_100-150'] = upper_envelope(df['admissions_100-150'],7)
+    # df['admissions_150-175'] = upper_envelope(df['admissions_150-175'],7)
+    # df['admissions_175-200'] = upper_envelope(df['admissions_175-200'],7)
+    # df['admissions_200-1800'] = upper_envelope(df['admissions_200-1800'],7)
+    # max_case=np.max(df['vcases'])
+    # max_admission=np.max(df['vadmissions'])
+    # median_death=np.median(df['vdeaths'])
+    # #df['vadmissions'] = upper_envelope(df['vadmissions'],7)
+    # df['deaths_0-100'] = upper_envelope(df['deaths_0-100'],10)
+    # df['deaths_100-150'] = upper_envelope(df['deaths_100-150'],10)
+    # df['deaths_150-175'] = upper_envelope(df['deaths_150-175'],10)
+    # df['deaths_175-200'] = upper_envelope(df['deaths_175-200'],10)
+    # df['deaths_200-1800'] = upper_envelope(df['deaths_200-1800'],10)
+    # #df['vdeaths'] = upper_envelope(df['vdeaths'],10)
     fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['cases_0-100']/SF_cases,
                             #stackgroup='one', groupnorm='percent',
                              name="Cases (0-100)", 
@@ -1429,31 +1450,44 @@ app.layout = html.Div(children=[
                     #     #style={'padding': 10, 'flex': 1}
                     # ),
                     #html.Br(),
-                    html.H4("(Coming soon) Social Distancing Measures:", className="control_label", style={'padding': 10, 'flex': 1}),
-                    dcc.RadioItems(
-                        id="social_distancing",
-                        options=[{'disabled':True, 'label': i, 'value': i} for i in ['Current',
-                                                                    '25% Increase(+)',
-                                                                    '25% Decrease(-)']],
+                    # html.H4("(Coming soon) Social Distancing Measures:", className="control_label", style={'padding': 10, 'flex': 1}),
+                    # dcc.RadioItems(
+                    #     id="social_distancing",
+                    #     options=[{'disabled':True, 'label': i, 'value': i} for i in ['Current',
+                    #                                                 '25% Increase(+)',
+                    #                                                 '25% Decrease(-)']],
 
-                        value="Current",
+                    #     value="Current",
+                    #     labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
+                    #     #labelStyle = {'display': 'inline-block', 'margin-right': 10},
+                    #     style={'padding': 10, 'flex': 1}
+                    # ),
+                    # #html.Br(),
+                    # html.H4("(Coming soon) Vaccination rate:", className="control_label", style={'padding': 10, 'flex': 1}),
+                    # dcc.RadioItems(
+                    #     id="vaccination_rate",
+                    #     options=[{'disabled':True, 'label': i, 'value': i} for i in ['Current',
+                    #                                                 '5% Increase(+)',
+                    #                                                 '5% Decrease(-)']],
+
+                    #     value="Current",
+                    #     labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
+                    #     #labelStyle = {'display': 'inline-block', 'margin-right': 10},
+                    #     style={'padding': 10, 'flex': 1}
+                    # ),
+                    html.H4("Choose Scenarios:", className="control_label", style={'padding': 10, 'flex': 1}),
+                    dcc.RadioItems(
+                        id="intervention",
+                        options=[{'label': i, 'value': i} for i in ['No intervention',
+                                                                    'More interventions',
+                                                                    'Less interventions']
+                        ],
+                        value="No intervention",
                         labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
                         #labelStyle = {'display': 'inline-block', 'margin-right': 10},
                         style={'padding': 10, 'flex': 1}
                     ),
-                    #html.Br(),
-                    html.H4("(Coming soon) Vaccination rate:", className="control_label", style={'padding': 10, 'flex': 1}),
-                    dcc.RadioItems(
-                        id="vaccination_rate",
-                        options=[{'disabled':True, 'label': i, 'value': i} for i in ['Current',
-                                                                    '5% Increase(+)',
-                                                                    '5% Decrease(-)']],
-
-                        value="Current",
-                        labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
-                        #labelStyle = {'display': 'inline-block', 'margin-right': 10},
-                        style={'padding': 10, 'flex': 1}
-                    ),
+                    html.P("Interventions: Lockdown(+-25%), Vaccination(+-10%)"),
                     # html.H4("(Coming soon) COVID Variants:", className="control_label", style={'padding': 10, 'flex': 1}),
                     # dcc.RadioItems(
                     #     id="variants",
@@ -1801,8 +1835,11 @@ def render_content(tab):
 @app.callback(Output("graph1", 'figure'), Input("filter_type", "value"),
             prevent_initial_call=True)
 @cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
-def update_SEIR(filter_type):
-    return load_SEIR(filter_type)
+def update_SEIR(filter_type1):
+    global filter_type
+    filter_type=filter_type1
+    return load_SEIR(filter_type1)
+    #return load_SEIR_by_intervention(filter_type, "No intervention")
 
 @app.callback(Output("graph2", 'figure'), Output("scatter_size_num", "children"),
             #[Input("zipcode-store-value", "data"), Input("year-store-value", "data"), Input('sampling-store-value', 'data')],
