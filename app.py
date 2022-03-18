@@ -1259,7 +1259,7 @@ app.layout = html.Div(children=[
                                     children=[
                                         html.P('Paper: "An Agent-based City Scale Digital Twin (EDEN) for Pandemic Analytics and Scenario Planning, Imran Mahmood et al. (in publishing)"'),
                                         html.H3(children='* Simulation results are provided by Dr. Edwin Michael Lab, USF College of Public Health *'),
-                                        html.H4('Team members: Edwin Michael (PI), Imran Mahmood Qureshi Hashmi, Yilian Alonso Otano, Soo I. Kim, Shakir Bilal'),
+                                        html.H4('Team members: Edwin Michael (PI), Imran Mahmood, Yilian Alonso Otano, Soo I. Kim, Shakir Bilal'),
                                         #html.Img(src=app.get_asset_url('usf-logo-white-color.svg'), style={'width':'20%'})
                                     ]
                                 ),                              
