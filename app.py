@@ -135,7 +135,6 @@ else:
     print('Usage: python '+str(sys.argv[0])+' result_folder_name')
     exit()
 
-#path = os.path.join('..', 'ABM-simulator', 'SimulationEngine', 'output', '2022-03-01', 'run1-imran-0301')
 path = os.path.join('..', 'ABM-simulator', 'SimulationEngine', 'output', folder_name)
 
 print(path)
