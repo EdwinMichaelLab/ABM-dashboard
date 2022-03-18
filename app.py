@@ -512,9 +512,6 @@ def plot_gender2(df):
     fig.update_yaxes(showline=True, linewidth=1, linecolor='black', mirror=True)
     fig.update_layout(showlegend=True, 
                     autosize=True, 
-                    #width=1000, height=800,
-                    #legend=dict(orientation="h",x=0, y=-0.1, traceorder="normal"),
-                    #legend=dict(orientation="h"),
                     font=dict(family="Arial", size=12))
     fig.update_xaxes(dtick="M2", tickformat="%b %Y")
 
@@ -537,27 +534,6 @@ def plot_race2(df):
         #column_width=[0.25, 0.25,0.25,0.25,0.25],
         row_width=[0.1, 0.25, 0.25, 0.25, 0.25, 0.25,]
         )
-    # df['cases_white'] = upper_envelope(df['cases_white'],7)
-    # df['cases_black'] = upper_envelope(df['cases_black'],7)
-    # df['cases_asian'] = upper_envelope(df['cases_asian'],7)
-    # df['cases_other'] = upper_envelope(df['cases_other'],7)
-    # df['cases_two'] = upper_envelope(df['cases_two'],7)
-    # #df['vcases'] = upper_envelope(df['vcases'],7)
-    # df['admissions_white'] = upper_envelope(df['admissions_white'],7)
-    # df['admissions_black'] = upper_envelope(df['admissions_black'],7)
-    # df['admissions_asian'] = upper_envelope(df['admissions_asian'],7)
-    # df['admissions_other'] = upper_envelope(df['admissions_other'],7)
-    # df['admissions_two'] = upper_envelope(df['admissions_two'],7)
-    # max_case=np.max(df['vcases'])
-    # max_admission=np.max(df['vadmissions'])
-    # median_death=np.median(df['vdeaths'])
-    # #df['vadmissions'] = upper_envelope(df['vadmissions'],7)
-    # df['deaths_white'] = upper_envelope(df['deaths_white'],10)
-    # df['deaths_black'] = upper_envelope(df['deaths_black'],10)
-    # df['deaths_asian'] = upper_envelope(df['deaths_asian'],10)
-    # df['deaths_other'] = upper_envelope(df['deaths_other'],10)
-    # df['deaths_two'] = upper_envelope(df['deaths_two'],10)
-    # #df['vdeaths'] = upper_envelope(df['vdeaths'],10)
     fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['cases_white']/SF_cases,
                             name="cases (white)",  
                             fill='tozeroy',
@@ -703,27 +679,7 @@ def plot_FPL2(df):
        # column_width=[0.25, 0.25,0.25,0.25,0.25],
         row_width=[0.1, 0.25, 0.25, 0.25, 0.25, 0.25,]
     )
-    # df['cases_0-100'] = upper_envelope(df['cases_0-100'],7)
-    # df['cases_100-150'] = upper_envelope(df['cases_100-150'],7)
-    # df['cases_150-175'] = upper_envelope(df['cases_150-175'],7)
-    # df['cases_175-200'] = upper_envelope(df['cases_175-200'],7)
-    # df['cases_200-1800'] = upper_envelope(df['cases_200-1800'],7)
-    # #df['vcases'] = upper_envelope(df['vcases'],7)
-    # df['admissions_0-100'] = upper_envelope(df['admissions_0-100'],7)
-    # df['admissions_100-150'] = upper_envelope(df['admissions_100-150'],7)
-    # df['admissions_150-175'] = upper_envelope(df['admissions_150-175'],7)
-    # df['admissions_175-200'] = upper_envelope(df['admissions_175-200'],7)
-    # df['admissions_200-1800'] = upper_envelope(df['admissions_200-1800'],7)
-    # max_case=np.max(df['vcases'])
-    # max_admission=np.max(df['vadmissions'])
-    # median_death=np.median(df['vdeaths'])
-    # #df['vadmissions'] = upper_envelope(df['vadmissions'],7)
-    # df['deaths_0-100'] = upper_envelope(df['deaths_0-100'],10)
-    # df['deaths_100-150'] = upper_envelope(df['deaths_100-150'],10)
-    # df['deaths_150-175'] = upper_envelope(df['deaths_150-175'],10)
-    # df['deaths_175-200'] = upper_envelope(df['deaths_175-200'],10)
-    # df['deaths_200-1800'] = upper_envelope(df['deaths_200-1800'],10)
-    # #df['vdeaths'] = upper_envelope(df['vdeaths'],10)
+
     fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['cases_0-100']/SF_cases,
                             #stackgroup='one', groupnorm='percent',
                              name="Cases (0-100)", 
@@ -877,23 +833,7 @@ def load_SEIR(mode):
         mean['date'] = dates
         min['date'] = dates
 
-        # # temporary solutions for empty vcases/vdeaths/vadmissions
-        # if set(['vcases','vdeaths', 'vadmissions']).issubset(df2.columns) is False:
-        #     df2['vcases']=df2['cases']
-        #     df2['vdeaths']=df2['deaths']
-        #     df2['vadmissions']=df2['admissions']
-        #     print("Warning: vcases/vadmissions/vdeaths not found. Use cases/admissions/deathss")
-        #print('Loading completed!')
-        
-        #return plot(min, mean, max)
-        
         return plot2(min, mean, max)
-
-        # plotdf=plotdf.groupby(plotdf.columns, axis=1).sum()
-        # plotdf['date']= dlist[0]['date'].tolist()
-        # df2 =pd.DataFrame(plotdf, columns=['date', 'cases', 'deaths','admissions', 'vcases', 'vdeaths', 'vadmissions'])
-        #return plot2(min, mean, max, df2)
-
     else:
         dlist = []
         for root, dirs, files in os.walk(path):
@@ -905,24 +845,10 @@ def load_SEIR(mode):
                     d['chunk'] = no
                     dlist.append(d)
 
-        # plotdf = pd.concat(dlist, axis=1)
-        # dates = dlist[0]['date'].tolist()
-        # #####plotdf.drop('date', axis=1, inplace=True)
-
-        # max = plotdf.groupby(plotdf.columns, axis=1).max()
-        # #mean = plotdf.groupby(plotdf.columns, axis=1).mean() # error! return 0s ... use transpose() for fix
-        # df2=plotdf.transpose()
-        # df2 = df2.groupby(by=df2.index, axis=0).apply(lambda g: g.mean() if isinstance(g.iloc[0,0], numbers.Number) else g.iloc[0])
-        # plotdf = df2.transpose() # same as "mean" above
         print('Filtered plots-Loading completed!')
         plotdf = pd.concat(dlist)
         plotdf = plotdf.sort_values(by='date')
-        # temporary solutions for empty vcases/vdeaths/vadmissions
-        # if set(['vcases','vdeaths', 'vadmissions']).issubset(plotdf.columns)==False:
-        #     plotdf['vcases']=plotdf['cases']
-        #     plotdf['vdeaths']=plotdf['deaths']
-        #     plotdf['vadmissions']=plotdf['admissions']
-        #     print("Warning: vcases/vadmissions/vdeaths not found. Use cases/admissions/deathss")
+
         if mode == 'By Age':
             #return plot_age(plotdf)
             return plot_age2(plotdf)
@@ -1017,11 +943,6 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year, sampli
     #datelist = pd.date_range(startdate, enddate).tolist()
     pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
     pdf['Date']=pdf['Date'].astype(str)
-    #pdf['Date']=pdf['Date'].astype('category')
-    # print('scatter data size(before '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
-    # pdf = pdf.sample(frac=SAMPLING_PERCENT_1) # (???) similar to geting every 4th rows
-    # print('scatter data size(after '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
-    #print("unique states", pd.unique(pdf["state"]))
 
     #print('scatter memory usage', pdf.info())
     print('scatter memory size(MB)', sys.getsizeof(pdf)/(1024*1024))
@@ -1034,12 +955,7 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year, sampli
 load_heatmap using_read_parquet
 """
 def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, sampling=default_sampling, width=graph_width, height=graph_height, show_whole_county=False):
-    # global year_for_all
-    # global zipcode_for_all
-    # global sampling_for_all
 
-    # zipcode=zipcode_for_all
-    # year=year_for_all
     sampling_rate=sampling
 
     total_steps = enddate - startdate
@@ -1053,9 +969,6 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, sampli
         min_step=step_until_lastday_of_2020.days + 1
         max_step=total_steps.days
  
-    # if zipcode is None:
-    #     zipcode=default_zipcode
-    # print("zipcode:", zipcode)
     print(zipcode, year, min_step, max_step, "show_whole_county=", show_whole_county)
     
     columns_being_used_in_heatmap=[
@@ -1065,13 +978,8 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, sampli
         'z',
         #'zip',
     ]
-    #tp = pd.read_csv(os.path.join(path, 'heatmap.csv'), iterator=True, chunksize=CHUNK_SIZE2, skiprows=lambda x: x % SKIP_EVERY_NTH_2)
-    #pdf = pd.concat(tp, ignore_index=True)
-    #pdf = dd.read_csv(os.path.join(path, 'heatmap.csv'))
-    #pdf = pdf.drop(['zip'], axis=1)
+
     t1=datetime.now()
-    #pdf = pd.read_parquet(os.path.join(path, 'heatmap.parquet'),
-    #pdf = pd.read_parquet(os.path.join(path, 'heatmap.parquet.gzip'),
 
     filters_settting=[('step','>=', min_step), ('step', '<=', max_step)]
     if show_whole_county is False:
@@ -1094,134 +1002,12 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, sampli
     #datelist = pd.date_range(startdate, enddate).tolist()
     pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
     pdf['Date']=pdf['Date'].astype(str)
-    #pdf['Date']=pdf['Date'].astype('category')
-    #heatmap=db.heatmap
-    #list_heatmap=list(heatmap.find({}))
-    #list_heatmap=list(heatmap.find({}))[::10]
-    #print(len(list_heatmap))
-    #pdf = pd.DataFrame(list_heatmap)
 
-    # print('heatmap data size(before '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
-    # pdf = pdf.sample(frac=SAMPLING_PERCENT_2)
-    # print('heatmap data size(after '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
-
-    #print('heatmap memory size', pdf.info())
     print('heatmap memory usage(MB)', sys.getsizeof(pdf)/(1024*1024))
     pdf = pdf.sort_values(by='step')
     pdf.drop('step',axis=1, inplace=True)
 
     return draw_heatmap(pdf, zipcode, width, height, show_whole_county)
-
-"""
-load_scatter via_mongodb
-"""
-# def load_scatter_mongodb(zipcode=default_zipcode, year=default_year, width=graph_width, height=graph_height):
-#     total_steps = enddate - startdate
-#     step_until_lastday_of_2020=date(2020, 12, 31)-startdate
-#     min_step=0
-#     max_step=total_steps.days
-#     if year=="2020":
-#         min_step=0
-#         max_step=step_until_lastday_of_2020.days
-#     elif year=="2021":
-#         min_step=step_until_lastday_of_2020.days + 1
-#         max_step=total_steps.days
- 
-#     if zipcode is None:
-#         zipcode=default_zipcode
-#     print("zipcode:", zipcode)
-#     print(year, min_step, max_step)
-
-#     #tp = vaex.from_csv(os.path.join(path, 'scatter.csv'), copy_index=False)
-
-#     #tp = pd.read_csv(os.path.join(path, 'scatter.csv'), iterator=True, chunksize=CHUNK_SIZE1, skiprows=lambda x: x % SKIP_EVERY_NTH_1)
-#     #pdf = pd.concat(tp, ignore_index=True)
-
-#     #pdf = dd.read_csv(os.path.join(path, 'scatter.csv'))
-
-#     #pdf=pdf.drop(['pid', 'location', 'ZIP', 'type'], axis=1)
-
-#     t1=datetime.now()
-#     list_scatter=list(db.scatter.find({'$and':[
-#                                     {"ZIP":int(zipcode)}, 
-#                                     {'step':{'$gt':min_step}},
-#                                     {'step':{'$lt':max_step}}
-#     ]}
-#     ))
-#     print("mongodb search result for ", zipcode, len(list_scatter),"time spent", datetime.now()-t1)
-#     pdf = pd.DataFrame(list_scatter)
-
-#     pdf["state"] =  pdf["state"].astype("category")
-#     #pdf["step"] =  pdf["step"].astype("category")
-#     pdf["step"] = pd.to_numeric(pdf["step"], downcast="unsigned")
-#     pdf[['x','y']] = pdf[['x','y']].apply(pd.to_numeric, downcast="float")
-
-#     #datelist = pd.date_range(startdate, enddate).tolist()
-#     pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
-#     pdf['Date']=pdf['Date'].astype(str)
-    
-
-#     # print('scatter data size(before '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
-#     # pdf = pdf.sample(frac=SAMPLING_PERCENT_1) # (???) similar to geting every 4th rows
-#     # print('scatter data size(after '+ str(SAMPLING_PERCENT_1) +' sampling)', pdf.size)
-
-#     #print('scatter memory usage', pdf.info())
-#     print('scatter memory size(MB)', sys.getsizeof(pdf)/(1024*1024))
-#     pdf = pdf.sort_values(by='step') # should be run after sampling
-#     pdf.drop('step',axis=1, inplace=True)
-
-#     return draw_scatter(pdf, zipcode, width, height)
-
-"""
-load_heatmap using_mongodb
-"""
-# def load_heatmap_mongodb(zipcode=default_zipcode, year=default_year, width=graph_width, height=graph_height):
-#     total_steps = enddate - startdate
-#     step_until_lastday_of_2020=date(2020, 12, 31)-startdate
-#     min_step=0
-#     max_step=total_steps.days
-#     if year=="2020":
-#         min_step=0
-#         max_step=step_until_lastday_of_2020.days
-#     elif year=="2021":
-#         min_step=step_until_lastday_of_2020.days + 1
-#         max_step=total_steps.days
- 
-#     if zipcode is None:
-#         zipcode=default_zipcode
-#     print("zipcode:", zipcode)
-#     print(year, min_step, max_step)
-
-#     t1=datetime.now()
-#     #list_heatmap=list(db.heatmap.find({"zip":int(zipcode)}))
-#     list_heatmap=list(db.heatmap.find({'$and':[
-#                                     {"zip":int(zipcode)}, 
-#                                     {'step':{'$gt':min_step}},
-#                                     {'step':{'$lt':max_step}}
-#     ]}
-#     ))
-#     print("heatmap mongodbsearch result", len(list_heatmap),"time spent", datetime.now()-t1)
-#     pdf = pd.DataFrame(list_heatmap)
-
-#     # pdf["step"] =  pdf["step"].astype("category")
-#     pdf["step"] = pd.to_numeric(pdf["step"], downcast="unsigned")
-#     pdf[['x','y']] = pdf[['x','y']].apply(pd.to_numeric, downcast="float")
-#     pdf["z"] = pd.to_numeric(pdf["z"], downcast="unsigned")
-
-#     #datelist = pd.date_range(startdate, enddate).tolist()
-#     pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
-#     pdf['Date']=pdf['Date'].astype(str)
-
-#     # print('heatmap data size(before '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
-#     # pdf = pdf.sample(frac=SAMPLING_PERCENT_2)
-#     # print('heatmap data size(after '+ str(SAMPLING_PERCENT_2) +' sampling)', pdf.size)
-    
-#     #print('heatmap memory size', pdf.info())
-#     print('heatmap memory usage(MB)', sys.getsizeof(pdf)/(1024*1024))
-#     pdf = pdf.sort_values(by='step')
-#     pdf.drop('step',axis=1, inplace=True)
-    
-#     return draw_heatmap(pdf, zipcode, width, height)
 
 def draw_scatter(pdf, zipcode, width, height, show_whole_county):
     global scatter_size
@@ -1239,12 +1025,8 @@ def draw_scatter(pdf, zipcode, width, height, show_whole_county):
         zoom_level=8
     print("centers", center_lat, center_lon, "zoom", zoom_level)
     fig = px.scatter_mapbox(pdf,
-                            #title="Scatter_Map",
-                            #color='color',
-                            #animation_frame='step',
                             animation_frame='Date',
-                            #animation_group='date',
-                            #text='state',
+
                             color='state',
                             color_discrete_map=legend_map,
                             lat='y',
@@ -1258,17 +1040,12 @@ def draw_scatter(pdf, zipcode, width, height, show_whole_county):
                             mapbox_style='carto-positron',
     )
     fig.update_layout(showlegend=False)
-    #fig.update_traces(marker=dict(size=10))
-    #fig.update_traces(marker=dict(size=6))
+
     fig.update_layout(legend=dict(
         orientation="h",
-        # xanchor="left",
-        # yanchor="bottom",
-        # x=0,
-        # y=-0.1,
+        xanchor="right",
         yanchor="bottom",
         y=1.02,
-        xanchor="right",
         x=1,        
         #title_font_family="Times New Roman",
         font=dict(
@@ -1331,47 +1108,21 @@ def draw_legend_table():
             ], style={"border-style": "ridge", "text-align": "left", 'marginLeft': 'auto', 'marginRight': 'auto'})
 
 def draw_risky_zipcodes():
-    # fig= plt.figure()
-    # ax= fig.add_subplot(111)
-    # ax.plot(range(10), [i**2 for i in range(10)])
-    # ax.grid(True)
-    # plotly_fig = mpl_to_plotly(fig)
-
-    # fig2, ax2 = plt.subplots(1, figsize=(15, 20))
-    # dfm2=gpd.read_file("hillsborough-zipcodes-boundarymap.geojson")
-    # ax2.set_title('Florida Hillsborough County Zipcodes 222', fontdict={'fontsize': '20', 'fontweight' : '3'})
-
-    # for z in range(len(ZIPS)):
-    #     text = ax2.text(ZIPS_centers[ZIPS[z]][1], ZIPS_centers[ZIPS[z]][0], str(ZIPS[z]), 
-    #                     ha="center", va="center", 
-    #                     color="black")
-    # #ax.axis('off')
-    # fig3=dfm2.plot(ax=ax2, column='zip_area', k=3, edgecolors='black', linewidth=0.1, cmap='GnBu_r', legend=True,
-    #     legend_kwds={'label': "risky area", 'orientation': 'horizontal',
-    #     'pad':0.05, 'shrink':0.2}) 
-    # plotly_fig = mpl_to_plotly(fig3)
-    # return plotly_fig
     dfm2=gpd.read_file("hillsborough-zipcodes-boundarymap.geojson")
     fig = px.choropleth_mapbox(dfm2, geojson=dfm2, locations='zipcode', color='zip_area', featureidkey="properties.zipcode",
                             color_continuous_scale="Viridis",
                             #range_color=(0, 12),
                             mapbox_style="carto-positron",
-                            zoom=9, center = {"lat": 28.0, "lon": -82.5},
+                            zoom=9, center = {"lat": 28.0, "lon": -82.1},
                             opacity=0.5,
                             #labels={'zip_area':'random'}
                             )
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     return fig    
+
 """
 main plotly dash start here.
 """
-
-# figure1 = load_SEIR('All cases')
-# print("Reading heatmap data...")
-# figure3 = load_heatmap(default_zipcode, default_year)
-# print("Reading scatter data...")
-# figure2 = load_scatter(default_zipcode, default_year)
-# print('SEIR/Scatter/Heatmap loading completed!')
 
 colors = {
     #'background': '#111111',
@@ -1438,78 +1189,6 @@ app.layout = html.Div(children=[
                         },
                 className="nav",
                 children=[
-                # html.H4("Choose Year:", className="control_label"),
-                # dcc.Dropdown(
-                #     id="year_for_all",
-                #     options=[{'label': i, 'value': i} for i in ['2020','2021']],
-                #     value=default_year
-                # ),
-                # html.H4("Choose Zip Code: ", className="control_label"),
-                # dcc.Dropdown(
-                #     id="zipcode_for_all",
-                #     options=[{'label': i, 'value': i} for i in ZIPS],
-                #     value=default_zipcode
-                # ),
-                # html.H4("Sampling rate: ", className="control_label"),
-                # dcc.Dropdown(
-                #     id="sampling_for_all",
-                #     options=[{'label': '10 %', 'value':0.1},
-                #             {'label': '25 %', 'value':0.25},
-                #             {'label': '50 %', 'value': 0.5},
-                #             {'label': '75 %', 'value':0.75},
-                #             {'label': "100 %", 'value':1.0}],
-                #     value=0.25
-                # ),
-                # dcc.Store(id='year-store-value'),
-                # dcc.Store(id='zipcode-store-value'),
-                # dcc.Store(id='sampling-store-value'),
-           
-                    # html.H4(
-                    #     "(Coming soon) Select Forecast Range:",
-                    #     className="control_label", style={'padding': 10, 'flex': 1}
-                    # ),
-                    # html.Br(),
-                    # dcc.RangeSlider(
-                    #     disabled=True,
-                    #     id="year_slider",
-                    #     min=0,
-                    #     max=3,
-                    #     step=None,
-                    #     marks={
-                    #         0: "2020",
-                    #         1: "2021",
-                    #         2: "2022",
-                    #         3: "2023"
-                    #     },
-                    #     value=[0, 1],
-                    #     #style={'padding': 10, 'flex': 1}
-                    # ),
-                    #html.Br(),
-                    # html.H4("(Coming soon) Social Distancing Measures:", className="control_label", style={'padding': 10, 'flex': 1}),
-                    # dcc.RadioItems(
-                    #     id="social_distancing",
-                    #     options=[{'disabled':True, 'label': i, 'value': i} for i in ['Current',
-                    #                                                 '25% Increase(+)',
-                    #                                                 '25% Decrease(-)']],
-
-                    #     value="Current",
-                    #     labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
-                    #     #labelStyle = {'display': 'inline-block', 'margin-right': 10},
-                    #     style={'padding': 10, 'flex': 1}
-                    # ),
-                    # #html.Br(),
-                    # html.H4("(Coming soon) Vaccination rate:", className="control_label", style={'padding': 10, 'flex': 1}),
-                    # dcc.RadioItems(
-                    #     id="vaccination_rate",
-                    #     options=[{'disabled':True, 'label': i, 'value': i} for i in ['Current',
-                    #                                                 '5% Increase(+)',
-                    #                                                 '5% Decrease(-)']],
-
-                    #     value="Current",
-                    #     labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
-                    #     #labelStyle = {'display': 'inline-block', 'margin-right': 10},
-                    #     style={'padding': 10, 'flex': 1}
-                    # ),
                     html.H4("Choose Scenarios:", className="control_label", style={'padding': 10, 'flex': 1}),
                     dcc.RadioItems(
                         id="intervention",
@@ -1523,16 +1202,6 @@ app.layout = html.Div(children=[
                         style={'padding': 10, 'flex': 1}
                     ),
                     html.P("Interventions: Lockdown(+-25%), Vaccination(+-10%)"),
-                    # html.H4("(Coming soon) COVID Variants:", className="control_label", style={'padding': 10, 'flex': 1}),
-                    # dcc.RadioItems(
-                    #     id="variants",
-                    #     options=[{'disabled':True, 'label': i, 'value': i} for i in ['Current-Up to Delta', 'New-Omicron']],
-
-                    #     value="Current",
-                    #     labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
-                    #     #labelStyle = {'display': 'inline-block', 'margin-right': 10},
-                    #     style={'padding': 10, 'flex': 1}
-                    # ),
                     html.Br(),
                     html.Br(),
                     html.A("Contact Info.", href='https://health.usf.edu/publichealth/overviewcoph/faculty/edwin-michael', target="_blank"),
@@ -1587,19 +1256,6 @@ These inviduals and their spread over time is represented by the spatial scatter
 
 heat_map_explain="The bar to the right of the map is a legend, assigning a color on a gradient based on the number of cases within a zip code. The zip code areas with the highest number of cases will be red and the zip code areas with the lowest number of cases will be dark green. A z-value is computed based on the aggerate cases at a certain location and represents the heat of that location. A higher z-value represents higher density of the cases at a given location."
 
-# @app.callback([Output('year-store-value', 'data'), Output('zipcode-store-value', 'data'), Output('sampling-store-value', 'data')],
-#             [Input('year_for_all', 'value'), Input('zipcode_for_all', 'value'), Input('sampling_for_all', 'value')],
-#             prevent_initial_call=True)
-# def store_data(year, zipcode, sampling):
-#     global year_for_all
-#     global zipcode_for_all
-#     global sampling_for_all
-#     year_for_all=year
-#     zipcode_for_all=zipcode
-#     sampling_for_all=sampling
-#     print(year_for_all, zipcode_for_all, sampling_for_all)
-#     return year_for_all, zipcode_for_all, sampling_for_all
-
 @app.callback(Output('tabs-contentgraph', 'children'), 
     Input('tabsgraph', 'value')) # first page... if uncommented, it will not be displayed
 @cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
@@ -1626,9 +1282,7 @@ def render_content(tab):
             html.Br(),
             html.Br(),
             html.Img(src=app.get_asset_url('USF-EMichael-ABM-EDEN.png'), style={'margin-left': 2, 'width':'497px'}),
-            #html.Br(),
-            #html.Br(),
-            #html.Img(src=app.get_asset_url('usf-logo-white-bg.jfif'), style={'margin-left': 10, 'width':'200px'}),
+
         ])
     elif tab == 'tab1':
         return html.Div([
@@ -1646,9 +1300,6 @@ def render_content(tab):
                 value="All cases",
                 labelStyle={'display': 'inline-block'}
             ),
-            #html.P("* FPL: Federal Poverty Level (%)", style={'padding': 1, 'flex': 1, 'display': 'inline-block'}),
-            #html.A("Federal Poverty Level", href='https://www.healthcare.gov/glossary/federal-poverty-level-fpl/', target="_blank", style={'padding': 10, 'flex': 1}),
-            #html.Br(),
             html.Div(children=[
                 dcc.Graph(
                     id='graph1',
@@ -1823,22 +1474,12 @@ def render_content(tab):
                     value=default_year,
                     style={'width':'100px', 'display':'inline-block', 'verticalAlign':'middle'}
                 ),
-                # html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
-                # dcc.Dropdown(
-                #     id="zipcode_for_all",
-
-                #     options=[{'label': i, 'value': i} for i in ZIPS],
-                #     value=default_zipcode,
-                #     style={'width':'120px', 'display':'inline-block', 'verticalAlign':'middle'}
-                # ),
-                html.H4(", Sampling rate: ", className="control_label", style={'display': 'inline-block'}),
+               html.H4(", Sampling rate: ", className="control_label", style={'display': 'inline-block'}),
                 dcc.Dropdown(
                     id="sampling_for_all",
                     options=[{'label': '1 %', 'value':0.01},
                             {'label': '5 %', 'value':0.05},
                             {'label': '10 %', 'value': 0.1},
-                            #{'label': '75 %', 'value':0.75},
-                            #{'label': "100 %", 'value':1.0},
                     ],
                     value=0.01,
                     style={'width':'100px', 'display':'inline-block', 'verticalAlign':'middle'}
@@ -1870,6 +1511,8 @@ def render_content(tab):
     elif tab == 'tab5':
         fig=draw_risky_zipcodes()
         return  html.Div(children=[
+                    html.Br(),
+                    html.H2("Risky zipcodes"),
                     html.Div(
                         dcc.Graph(
                             id='graph5',
@@ -1933,15 +1576,6 @@ def update_heatmap_by_zipcode(zipcode, year, sampling):
             html.Br(), 
             html.A("More info of ZIP="+zipcode, href='https://www.unitedstateszipcodes.org/'+zipcode+'/', target="_blank")
         ])
-# @app.callback([Output("graph22", 'figure'), Output("graph33", 'figure')],
-#             [Input("zipcode_for_all", "value"), Input("year_for_all", "value")],
-#             prevent_initial_call=True)
-# @cache.memoize(timeout=CACHE_TIMEOUT)  # in seconds
-# def update_scatter_and_heatmap(zipcode_for_all, year_for_all):
-#     time.sleep(1)
-#     figure22 = load_scatter(zipcode_for_all, year_for_all, width=600, height=600)
-#     figure33 = load_heatmap(zipcode_for_all, year_for_all, width=600, height=600)
-#     return figure22, figure33
 
 @app.callback([
             Output("graph22", 'figure'), 
