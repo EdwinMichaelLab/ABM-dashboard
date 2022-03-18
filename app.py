@@ -37,6 +37,9 @@ from sklearn.metrics import mean_absolute_percentage_error
 from flask_caching import Cache
 import numbers
 
+import matplotlib.pyplot as plt
+from plotly.tools import mpl_to_plotly
+
 folder_name=""
 """
 scaling factors
@@ -1327,6 +1330,38 @@ def draw_legend_table():
                     html.Td("☻ severe", style={"color":"#EC7063"})]),
             ], style={"border-style": "ridge", "text-align": "left", 'marginLeft': 'auto', 'marginRight': 'auto'})
 
+def draw_risky_zipcodes():
+    # fig= plt.figure()
+    # ax= fig.add_subplot(111)
+    # ax.plot(range(10), [i**2 for i in range(10)])
+    # ax.grid(True)
+    # plotly_fig = mpl_to_plotly(fig)
+
+    # fig2, ax2 = plt.subplots(1, figsize=(15, 20))
+    # dfm2=gpd.read_file("hillsborough-zipcodes-boundarymap.geojson")
+    # ax2.set_title('Florida Hillsborough County Zipcodes 222', fontdict={'fontsize': '20', 'fontweight' : '3'})
+
+    # for z in range(len(ZIPS)):
+    #     text = ax2.text(ZIPS_centers[ZIPS[z]][1], ZIPS_centers[ZIPS[z]][0], str(ZIPS[z]), 
+    #                     ha="center", va="center", 
+    #                     color="black")
+    # #ax.axis('off')
+    # fig3=dfm2.plot(ax=ax2, column='zip_area', k=3, edgecolors='black', linewidth=0.1, cmap='GnBu_r', legend=True,
+    #     legend_kwds={'label': "risky area", 'orientation': 'horizontal',
+    #     'pad':0.05, 'shrink':0.2}) 
+    # plotly_fig = mpl_to_plotly(fig3)
+    # return plotly_fig
+    dfm2=gpd.read_file("hillsborough-zipcodes-boundarymap.geojson")
+    fig = px.choropleth_mapbox(dfm2, geojson=dfm2, locations='zipcode', color='zip_area', featureidkey="properties.zipcode",
+                            color_continuous_scale="Viridis",
+                            #range_color=(0, 12),
+                            mapbox_style="carto-positron",
+                            zoom=9, center = {"lat": 28.0, "lon": -82.5},
+                            opacity=0.5,
+                            #labels={'zip_area':'random'}
+                            )
+    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+    return fig    
 """
 main plotly dash start here.
 """
@@ -1524,6 +1559,7 @@ app.layout = html.Div(children=[
                                 dcc.Tab(label='Spatial Spread by zipcode', value='tab2', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='Heatmap by zipcode', value='tab3', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='Spatial Spread & Heatmap (Hillsborough County)', value='tab4', style = tab_style, selected_style = tab_selected_style),
+                                dcc.Tab(label='Risky zipcodes', value='tab5', style = tab_style, selected_style = tab_selected_style),
                             ], style = tabs_styles),
                             html.Div(
                                 id='tabs-contentgraph'),
@@ -1831,6 +1867,19 @@ def render_content(tab):
                     ), style={'display': 'inline-block'})
             ], style={'width': '100%', 'display': 'inline-block'})            
         ])
+    elif tab == 'tab5':
+        fig=draw_risky_zipcodes()
+        return  html.Div(children=[
+                    html.Div(
+                        dcc.Graph(
+                            id='graph5',
+                            figure=fig,
+                            config={
+                                'displayModeBar': False
+                            }                
+                        ), style={'display': 'inline-block'})
+                ], style={'width': '100%', 'display': 'inline-block'})        
+
 
 @app.callback(Output("graph1", 'figure'), Input("filter_type", "value"),
             prevent_initial_call=True)
