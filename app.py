@@ -65,7 +65,8 @@ ZIPS = ['33510', '33511', '33527', '33534', '33547', '33548', '33549', '33556', 
             '33566', '33567', '33569', '33570', '33572', '33573', '33578', '33579', '33584', '33592', '33594', '33596',
             '33598', '33602', '33603', '33604', '33605', '33606', '33607', '33609', '33610', '33611', '33612', '33613',
             '33614', '33615', '33616', '33617', '33618', '33619', '33624', '33625', '33626', '33629', '33634', '33635',
-            '33637', '33647']
+            '33637', '33647',
+            '33620', '33503']
 
 ZIPS_centers={ '33510':[27.96, -82.30], 
                 '33511':[27.90, -82.30],
@@ -116,7 +117,9 @@ ZIPS_centers={ '33510':[27.96, -82.30],
                 '33634':[28.00, -82.54],
                 '33635':[28.02, -82.61],
                 '33637':[28.05, -82.36],
-                '33647':[28.12, -82.35]}
+                '33647':[28.12, -82.35],
+                '33620':[28.062, -82.410],
+                '33503':[27.753, -82.2883]}
 MAX_ROWS=10000000
 
 if len(sys.argv)==2:
@@ -1109,14 +1112,33 @@ def draw_legend_table():
 
 def draw_risky_zipcodes():
     dfm2=gpd.read_file("hillsborough-zipcodes-boundarymap.geojson")
+    zipcode_centers_df=pd.DataFrame()
     fig = px.choropleth_mapbox(dfm2, geojson=dfm2, locations='zipcode', color='zip_area', featureidkey="properties.zipcode",
-                            color_continuous_scale="Viridis",
+                            color_continuous_scale="Viridis_r",
                             #range_color=(0, 12),
-                            mapbox_style="carto-positron",
-                            zoom=9, center = {"lat": 28.0, "lon": -82.1},
+                            #mapbox_style="carto-positron",
+                            #mapbox_style='white-bg',
+                            mapbox_style="open-street-map",
+                            zoom=9, center = {"lat": 27.91, "lon": -82.4},
                             opacity=0.5,
                             #labels={'zip_area':'random'}
                             )
+    # Cannot add text (zipcode) due to bug
+    # bug: https://community.plotly.com/t/scattermapbox-doesnt-work-with-marker-mode-as-text/35065/4
+    #
+    # zipcenters_df=pd.DataFrame(ZIPS_centers)
+    # zipcenters_df=zipcenters_df.transpose()
+    # zipcenters_df.reset_index(inplace=True)
+    # zipcenters_df=zipcenters_df.rename(columns = {'index':'zipcode'})    
+    # texttrace = go.Scattermapbox(
+    #         lat=zipcenters_df[0],
+    #         lon=zipcenters_df[1],
+    #         text=zipcenters_df['zipcode'].astype(str),
+    #         textfont={"color":"black","size":10},
+    #         mode="text",
+    #         #name="Hillsborough zipcode"
+    # )
+    # fig.add_trace(texttrace) 
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     return fig    
 
