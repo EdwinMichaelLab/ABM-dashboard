@@ -1109,9 +1109,9 @@ def draw_legend_table():
                     html.Td("☻ severe", style={"color":"#EC7063"})]),
             ], style={"border-style": "ridge", "text-align": "left", 'marginLeft': 'auto', 'marginRight': 'auto'})
 
-def draw_risky_zipcodes():
+def draw_risky_zipcodes_v1():
     dfm2=gpd.read_file("hillsborough-zipcodes-boundarymap.geojson")
-    zipcode_centers_df=pd.DataFrame()
+
     fig = px.choropleth_mapbox(dfm2, geojson=dfm2, locations='zipcode', color='zip_area', featureidkey="properties.zipcode",
                             color_continuous_scale="Viridis_r",
                             #range_color=(0, 12),
@@ -1139,7 +1139,55 @@ def draw_risky_zipcodes():
     # )
     # fig.add_trace(texttrace) 
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
-    return fig    
+    return fig
+
+def draw_risky_zipcodes():
+    dfm2=gpd.read_file("hillsborough-zipcodes-boundarymap.geojson")
+    # min_step=0
+    # max_step=250
+
+    # columns_being_used_in_heatmap=[
+    #     'step',
+    #     'x',
+    #     'y',
+    #     'z',
+    #     'zip',
+    # ]
+    # filters_settting=[('step','>=', min_step), ('step', '<=', max_step)]
+
+    # pdf = pd.read_parquet(os.path.join(path, 'heatmap.snappy.parquet'),
+    #                     filters=filters_settting,
+    #                     columns=columns_being_used_in_heatmap,
+    # )
+    # dlist=[]
+    # for s in range(max_step):
+    #     for z in range(len(ZIPS)):
+    #         d=pdf.loc[(pdf['step']==s) & (pdf['zip']==int(ZIPS[z]))]
+    #         dg = d.groupby(['x', 'y'])
+    #         r=0
+    #         for name,dd in dg:
+    #             r+=len(dd)
+    #         risk=[s, ZIPS[z], r]
+    #         dlist.append(pd.DataFrame(risk))
+    # riskzips_df = pd.concat(dlist, axis=1)
+    # riskzips_df = riskzips_df.transpose()
+    # riskzips_df.reset_index(inplace=True)
+    # riskzips_df.rename(columns={0:'step', 1:'zipcode', 2:'risk'}, inplace=True)
+    riskzips_df=pd.read_parquet("../risky_zipcodes.parquet")
+    fig = px.choropleth_mapbox(riskzips_df, geojson=dfm2, locations='zipcode', color='risk', featureidkey="properties.zipcode",
+                            color_continuous_scale="Viridis_r",
+                            #range_color=(0, 12),
+                            #mapbox_style="carto-positron",
+                            #mapbox_style='white-bg',
+                            mapbox_style="open-street-map",
+                            zoom=9, center = {"lat": 27.91, "lon": -82.4},
+                            opacity=0.5,
+                            #labels={'zip_area':'random'}
+                            animation_frame='step',
+                            )
+                
+    fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
+    return fig
 
 """
 main plotly dash start here.
