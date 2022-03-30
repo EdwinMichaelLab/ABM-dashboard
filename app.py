@@ -1433,6 +1433,7 @@ def render_content(tab):
                 #html.P("(Data size="+str(scatter_size)+"), Sampling rate="+str(sampling_for_all), style={'textAlign': 'center', 'color':'orange'}),
                 html.P("(Data size="+str(scatter_size)+", Sampling rate="+str(sampling_for_all), style={'textAlign': 'center', 'color':'orange'}),
             ]),
+            draw_legend_table(),   
             html.Div(children=[dcc.Graph(id="graph2",
                         figure=fig,
                         config={
@@ -1444,7 +1445,6 @@ def render_content(tab):
                             "height": "100%",
                         }
                     ),
-                    draw_legend_table(),   
                 ],
                 style={
                         "width": "900px",
