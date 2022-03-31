@@ -49,9 +49,12 @@ So simulated results of cases/admissions/deaths becomes over-estimated. So that'
 In future, logics of calibration will be applied instead to address this issue.
 """
 
-SF_cases=12
-SF_admissions=3.125
-SF_deaths=10
+# SF_cases=12
+# SF_admissions=3.125
+# SF_deaths=10
+SF_cases=0.02
+SF_admissions=0.01
+SF_deaths=0.01
 
 #import vaex
 
@@ -244,7 +247,11 @@ def plot2(min, mean, max):
 
     mean['vcases']=upper_envelope(mean['vcases'], 7)
     mean['vadmissions']=upper_envelope(mean['vadmissions'], 7)
-    #mean['vdeaths']=upper_envelope(mean['vdeaths'], 7)
+    mean['vdeaths']=upper_envelope(mean['vdeaths'], 7)
+    mean['cases']=upper_envelope(mean['cases'], 7)
+    mean['admissions']=upper_envelope(mean['admissions'], 7)
+    mean['deaths']=upper_envelope(mean['deaths'], 7)
+
     min['deaths_cumsum']=min['deaths'].cumsum()
     max['deaths_cumsum']=max['deaths'].cumsum()
     mean['deaths_cumsum']=mean['deaths'].cumsum()
@@ -826,10 +833,16 @@ def load_SEIR(mode):
         #####plotdf.drop('date', axis=1, inplace=True)
 
         max = plotdf.groupby(plotdf.columns, axis=1).max()
+        
         #mean = plotdf.groupby(plotdf.columns, axis=1).mean() # error! return 0s ... use transpose() for fix
-        df2=plotdf.transpose()
-        df2 = df2.groupby(by=df2.index, axis=0).apply(lambda g: g.mean() if isinstance(g.iloc[0,0], numbers.Number) else g.iloc[0])
-        mean = df2.transpose()        
+        
+        # df2=plotdf.transpose()
+        # df2 = df2.groupby(by=df2.index, axis=0).apply(lambda g: g.mean() if isinstance(g.iloc[0,0], numbers.Number) else g.iloc[0])
+        # mean = df2.transpose()
+        
+        sum= plotdf.groupby(plotdf.columns, axis=1).sum()
+        mean=sum
+        
         min = plotdf.groupby(plotdf.columns, axis=1).min()
         max['date'] = dates
         mean['date'] = dates
