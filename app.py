@@ -53,7 +53,7 @@ In future, logics of calibration will be applied instead to address this issue.
 # SF_admissions=3.125
 # SF_deaths=10
 SF_cases=0.02
-SF_admissions=0.01
+SF_admissions=0.02
 SF_deaths=0.01
 
 #import vaex
@@ -229,7 +229,119 @@ def calc_mean(df):
 def upper_envelope(df, windowsize=20):
     return df.rolling(window=windowsize).max().shift(int(-windowsize/2))
 
-def plot2(min, mean, max):
+# def plot2(min, mean, max):
+#     # Create figure
+#     fig = go.Figure()
+
+#     sub_groups = ['Cases', #'Actual cases', 
+#                 'Admissions', #'Actual admissions', 
+#                 'Deaths', #'Actual deaths'
+#                 '(Accumulated) Deaths', #'Actual deaths'
+#                 ]
+#     fig = make_subplots(rows=4, cols=1, 
+#         subplot_titles=sub_groups, 
+#         shared_xaxes=True, 
+#         #specs=[[{"secondary_y": True}],[{"secondary_y": True}],[{"secondary_y": True}]],
+#         vertical_spacing = 0.05,
+#         row_width=[0.2, 0.2, 0.25, 0.25])
+
+#     mean['vcases']=upper_envelope(mean['vcases'], 7)
+#     mean['vadmissions']=upper_envelope(mean['vadmissions'], 7)
+#     mean['vdeaths']=upper_envelope(mean['vdeaths'], 7)
+#     mean['cases']=upper_envelope(mean['cases'], 7)
+#     mean['admissions']=upper_envelope(mean['admissions'], 7)
+#     mean['deaths']=upper_envelope(mean['deaths'], 7)
+
+#     min['deaths_cumsum']=min['deaths'].cumsum()
+#     max['deaths_cumsum']=max['deaths'].cumsum()
+#     mean['deaths_cumsum']=mean['deaths'].cumsum()
+#     mean['vdeaths_cumsum']=mean['vdeaths'].cumsum()
+  
+#     fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['cases']/SF_cases,
+#                              name="max cases", 
+#                              line=dict({'width': 1, 'color': 'pink'})),
+#                 row=1, col=1)
+#     fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['cases']/SF_cases,
+#                              name="mean cases", 
+#                              line=dict({'width': 1, 'color': 'red'})),
+#                 row=1, col=1)
+#     fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['cases']/SF_cases,
+#                              name="min cases",
+#                              line=dict({'width': 1, 'color': 'darkorange'})),
+#                 row=1, col=1)
+#     fig.add_trace(go.Scatter(mode='lines', x=mean['date'], y=mean['vcases'],
+#                              name="vcases", 
+#                              line=dict({'width': 1, 'color': 'black', 'dash':'dot'})),
+#                              #line=dict({'width': 0.5, 'color': 'black'})),
+#                 #secondary_y=True,
+#                 row=1, col=1)
+#     fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['admissions']/SF_admissions,
+#                              name="max admissions", 
+#                              line=dict({'width': 1, 'color': 'lightgreen'})),
+#                 row=2, col=1)
+#     fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['admissions']/SF_admissions,
+#                              name="mean admissions", 
+#                              line=dict({'width': 1, 'color': 'darkgreen'})),
+#                 row=2, col=1)
+#     fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['admissions']/SF_admissions,
+#                              name="min admissions", 
+#                              line=dict({'width': 1, 'color': 'green'})),
+#                 row=2, col=1)
+
+#     fig.add_trace(go.Scatter(mode='lines',x=mean['date'], y=mean['vadmissions'],
+#                              name="actual admissions", 
+#                             line=dict({'width': 1, 'color': 'black', 'dash':'dot'})),
+#                               #line=dict({'width': 0.5, 'color': 'black'})),
+#                 #secondary_y=True,
+#                 row=2, col=1)
+#     fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['deaths']/SF_deaths,
+#                              name="max deaths", 
+#                              line=dict({'width': 1, 'color': 'darkgrey'})), 
+#                 row=3, col=1)
+#     fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['deaths']/SF_deaths,
+#                              name="mean deaths", 
+#                              line=dict({'width': 1, 'color': 'black'})),
+#                 row=3, col=1)
+#     fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['deaths']/SF_deaths,
+#                              name="min deaths", 
+#                              line=dict({'width': 1, 'color': 'darkgrey'})),
+#                 row=3, col=1)
+#     fig.add_trace(go.Scatter(mode='lines',x=mean['date'], y=mean['vdeaths'],
+#                              name="actual deaths", 
+#                              line=dict({'width': 1, 'color': 'black', 'dash':'dot'})),
+#                              #line=dict({'width': 0.5, 'color': 'black'})),
+#                 #secondary_y=True,
+#                 row=3, col=1)
+                
+#     fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['deaths_cumsum']/SF_deaths,
+#                              name="max deaths", 
+#                              line=dict({'width': 1, 'color': 'darkgrey'})), 
+#                 row=4, col=1)
+#     fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['deaths_cumsum']/SF_deaths,
+#                              name="mean deaths", 
+#                              line=dict({'width': 1, 'color': 'black'})),
+#                 row=4, col=1)
+#     fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['deaths_cumsum']/SF_deaths,
+#                              name="min deaths", 
+#                              line=dict({'width': 1, 'color': 'darkgrey'})),
+#                 row=4, col=1)
+#     fig.add_trace(go.Scatter(mode='lines',x=mean['date'], y=mean['vdeaths_cumsum'],
+#                              name="actual deaths", 
+#                              line=dict({'width': 1, 'color': 'black', 'dash':'dot'})),
+#                              #line=dict({'width': 0.5, 'color': 'black'})),
+#                 #secondary_y=True,
+#                 row=4, col=1)
+#     fig.update_xaxes(showline=True, linewidth=1, linecolor='black', mirror=True, ticklabelmode="period", dtick="M1")
+#     fig.update_yaxes(showline=True, linewidth=1, linecolor='black', mirror=True)
+#     fig.update_layout(showlegend=True, autosize=True, 
+#                     #width=900, height=800,
+#                     #legend=dict(orientation="h",x=0, y=-0.1, traceorder="normal"),
+#                       font=dict(family="Arial", size=11))
+
+#     #fig.show()
+#     return fig
+
+def plot3(mean):
     # Create figure
     fig = go.Figure()
 
@@ -245,92 +357,60 @@ def plot2(min, mean, max):
         vertical_spacing = 0.05,
         row_width=[0.2, 0.2, 0.25, 0.25])
 
-    mean['vcases']=upper_envelope(mean['vcases'], 7)
-    mean['vadmissions']=upper_envelope(mean['vadmissions'], 7)
-    mean['vdeaths']=upper_envelope(mean['vdeaths'], 7)
-    mean['cases']=upper_envelope(mean['cases'], 7)
-    mean['admissions']=upper_envelope(mean['admissions'], 7)
-    mean['deaths']=upper_envelope(mean['deaths'], 7)
+    days_interval=10
+    mean['vcases']=upper_envelope(mean['vcases'], days_interval)
+    mean['vadmissions']=upper_envelope(mean['vadmissions'], days_interval)
+    mean['vdeaths']=upper_envelope(mean['vdeaths'], days_interval)
+    mean['cases']=upper_envelope(mean['cases'], days_interval)
+    mean['admissions']=upper_envelope(mean['admissions'], days_interval)
+    mean['deaths']=upper_envelope(mean['deaths'], days_interval)
 
-    min['deaths_cumsum']=min['deaths'].cumsum()
-    max['deaths_cumsum']=max['deaths'].cumsum()
+
     mean['deaths_cumsum']=mean['deaths'].cumsum()
     mean['vdeaths_cumsum']=mean['vdeaths'].cumsum()
   
-    fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['cases']/SF_cases,
-                             name="max cases", 
-                             line=dict({'width': 1, 'color': 'pink'})),
-                row=1, col=1)
+
     fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['cases']/SF_cases,
                              name="mean cases", 
                              line=dict({'width': 1, 'color': 'red'})),
                 row=1, col=1)
-    fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['cases']/SF_cases,
-                             name="min cases",
-                             line=dict({'width': 1, 'color': 'darkorange'})),
-                row=1, col=1)
+
     fig.add_trace(go.Scatter(mode='lines', x=mean['date'], y=mean['vcases'],
                              name="vcases", 
-                             line=dict({'width': 1, 'color': 'black', 'dash':'dot'})),
-                             #line=dict({'width': 0.5, 'color': 'black'})),
-                #secondary_y=True,
+                             line=dict({'width': 2, 'color': 'darkred', 'dash':'dot'})),
                 row=1, col=1)
-    fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['admissions']/SF_admissions,
-                             name="max admissions", 
-                             line=dict({'width': 1, 'color': 'lightgreen'})),
-                row=2, col=1)
+
     fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['admissions']/SF_admissions,
                              name="mean admissions", 
                              line=dict({'width': 1, 'color': 'darkgreen'})),
                 row=2, col=1)
-    fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['admissions']/SF_admissions,
-                             name="min admissions", 
-                             line=dict({'width': 1, 'color': 'green'})),
-                row=2, col=1)
 
     fig.add_trace(go.Scatter(mode='lines',x=mean['date'], y=mean['vadmissions'],
                              name="actual admissions", 
-                            line=dict({'width': 1, 'color': 'black', 'dash':'dot'})),
-                              #line=dict({'width': 0.5, 'color': 'black'})),
-                #secondary_y=True,
+                            line=dict({'width': 2, 'color': 'teal', 'dash':'dot'})),
                 row=2, col=1)
-    fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['deaths']/SF_deaths,
-                             name="max deaths", 
-                             line=dict({'width': 1, 'color': 'darkgrey'})), 
-                row=3, col=1)
+
     fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['deaths']/SF_deaths,
                              name="mean deaths", 
-                             line=dict({'width': 1, 'color': 'black'})),
+                             line=dict({'width': 1, 'color': 'grey'})),
                 row=3, col=1)
-    fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['deaths']/SF_deaths,
-                             name="min deaths", 
-                             line=dict({'width': 1, 'color': 'darkgrey'})),
-                row=3, col=1)
+
     fig.add_trace(go.Scatter(mode='lines',x=mean['date'], y=mean['vdeaths'],
                              name="actual deaths", 
-                             line=dict({'width': 1, 'color': 'black', 'dash':'dot'})),
-                             #line=dict({'width': 0.5, 'color': 'black'})),
-                #secondary_y=True,
+                             line=dict({'width': 2, 'color': 'black', 'dash':'dot'})),
                 row=3, col=1)
                 
-    fig.add_trace(go.Scatter(fill='tonexty', x=max['date'], y=max['deaths_cumsum']/SF_deaths,
-                             name="max deaths", 
-                             line=dict({'width': 1, 'color': 'darkgrey'})), 
-                row=4, col=1)
+
     fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['deaths_cumsum']/SF_deaths,
                              name="mean deaths", 
-                             line=dict({'width': 1, 'color': 'black'})),
+                             line=dict({'width': 1, 'color': 'grey'})),
                 row=4, col=1)
-    fig.add_trace(go.Scatter(fill='tonexty', x=min['date'], y=min['deaths_cumsum']/SF_deaths,
-                             name="min deaths", 
-                             line=dict({'width': 1, 'color': 'darkgrey'})),
-                row=4, col=1)
+
     fig.add_trace(go.Scatter(mode='lines',x=mean['date'], y=mean['vdeaths_cumsum'],
                              name="actual deaths", 
-                             line=dict({'width': 1, 'color': 'black', 'dash':'dot'})),
-                             #line=dict({'width': 0.5, 'color': 'black'})),
-                #secondary_y=True,
+                             line=dict({'width': 2, 'color': 'black', 'dash':'dot'})),
                 row=4, col=1)
+
     fig.update_xaxes(showline=True, linewidth=1, linecolor='black', mirror=True, ticklabelmode="period", dtick="M1")
     fig.update_yaxes(showline=True, linewidth=1, linecolor='black', mirror=True)
     fig.update_layout(showlegend=True, autosize=True, 
@@ -338,6 +418,103 @@ def plot2(min, mean, max):
                     #legend=dict(orientation="h",x=0, y=-0.1, traceorder="normal"),
                       font=dict(family="Arial", size=11))
 
+    #fig.show()
+    return fig
+
+def plot3_weekly(mean):
+
+    mean['Date'] = pd.to_datetime(mean['date'])
+    mean['Week_Number'] = mean['Date'].dt.isocalendar().week
+    mean['Year']=(mean['Date'] - mean['Date'].dt.weekday * timedelta(days=1)).dt.year
+    mean.set_index('Date')
+
+    # Create figure
+    fig = go.Figure()
+
+    sub_groups = ['Cases', #'Actual cases', 
+                'Admissions', #'Actual admissions', 
+                'Deaths', #'Actual deaths'
+                '(Accumulated) Deaths', #'Actual deaths'
+                ]
+    fig = make_subplots(rows=4, cols=1, 
+        subplot_titles=sub_groups, 
+        shared_xaxes=True, 
+        #specs=[[{"secondary_y": True}],[{"secondary_y": True}],[{"secondary_y": True}]],
+        vertical_spacing = 0.05,
+        row_width=[0.2, 0.2, 0.25, 0.25])
+
+    mean['deaths_cumsum']=mean['deaths'].cumsum()
+    mean['vdeaths_cumsum']=mean['vdeaths'].cumsum()
+
+    mean = mean.groupby(['Year','Week_Number'], as_index=False).sum()
+
+    #mean['year_week']=mean['Year'].astype(str).str[-2:]+'-W'+mean['Week_Number'].astype(str)
+    mean['year_week']=mean['Year'].astype(str)+'-W'+mean['Week_Number'].astype(str)
+    mean['year_week2']=mean['Year'].astype(int)*100+mean['Week_Number'].astype(int)
+    mean['date'] = pd.to_datetime(mean['year_week2'].astype(str) + '0', format='%Y%W%w') # do not use: last week of the year become weird...
+  
+    fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['cases']/SF_cases,
+                             name="Simulated cases", 
+                             line=dict({'width': 1, 'color': 'red'})),
+                row=1, col=1)
+
+    fig.add_trace(go.Scatter(mode='lines', x=mean['date'], y=mean['vcases'],
+                             name="Actual cases", 
+                             line=dict({'width': 2, 'color': 'darkred', 'dash':'dot'})),
+                row=1, col=1)
+
+    fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['admissions']/SF_admissions,
+                             name="Simulated admissions", 
+                             line=dict({'width': 1, 'color': 'darkgreen'})),
+                row=2, col=1)
+
+    fig.add_trace(go.Scatter(mode='lines',x=mean['date'], y=mean['vadmissions'],
+                             name="Actual admissions", 
+                            line=dict({'width': 2, 'color': 'teal', 'dash':'dot'})),
+                row=2, col=1)
+
+    fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['deaths']/SF_deaths,
+                             name="Simulated deaths", 
+                             line=dict({'width': 1, 'color': 'grey'})),
+                row=3, col=1)
+
+    fig.add_trace(go.Scatter(mode='lines',x=mean['date'], y=mean['vdeaths'],
+                             name="Actual deaths", 
+                             line=dict({'width': 2, 'color': 'black', 'dash':'dot'})),
+                row=3, col=1)
+                
+
+    fig.add_trace(go.Scatter(fill='tonexty', x=mean['date'], y=mean['deaths_cumsum']/SF_deaths,
+                             name="Simulated deaths", 
+                             line=dict({'width': 1, 'color': 'grey'})),
+                row=4, col=1)
+
+    fig.add_trace(go.Scatter(mode='lines',x=mean['date'], y=mean['vdeaths_cumsum'],
+                             name="Actual deaths", 
+                             line=dict({'width': 2, 'color': 'black', 'dash':'dot'})),
+                row=4, col=1)
+
+    fig.update_xaxes(showline=True, linewidth=1, linecolor='black', mirror=True, ticklabelmode="period", dtick="M1",tickangle=45,)
+    #fig.update_xaxes(showline=True, linewidth=1, linecolor='black', mirror=True, ticklabelmode="period", dtick="4",tickangle=45,)
+
+    fig.update_yaxes(showline=True, linewidth=1, linecolor='black', mirror=True)
+    fig.update_layout(showlegend=True, autosize=True, 
+                    font=dict(family="Arial", size=10),
+                    xaxis=dict(
+                        rangeselector=dict(
+                            buttons=[
+                                dict(count=1, label="1m", step="month", stepmode="backward"),
+                                dict(count=6, label="6m", step="month", stepmode="backward"),
+                                dict(count=1, label="YTD", step="year", stepmode="todate"),
+                                dict(count=1, label="1y", step="year", stepmode="backward"),
+                                dict(step="all")
+                            ]),
+                        type="date"),#end xaxis  definition
+                    
+                    xaxis4_rangeslider_visible=True,
+                    xaxis4_rangeslider_thickness = 0.04,
+                    xaxis4_type="date"
+    )
     #fig.show()
     return fig
 
@@ -514,6 +691,90 @@ def plot_gender2(df):
     fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vdeaths'],
                              name="actual deaths", 
                              line=dict({'width': 0.5, 'color': 'black'})),
+                #secondary_y=True, 
+                row=6,col=1)
+    # -------------------------------------------------------------------------------------------------------------------
+    fig.update_xaxes(showline=True, linewidth=1, linecolor='black', mirror=True, ticklabelmode="period", dtick="M1")
+    fig.update_yaxes(showline=True, linewidth=1, linecolor='black', mirror=True)
+    fig.update_layout(showlegend=True, 
+                    autosize=True, 
+                    font=dict(family="Arial", size=12))
+    fig.update_xaxes(dtick="M2", tickformat="%b %Y")
+
+    return fig
+
+def plot_gender2_weekly(df):
+
+    df['Date'] = pd.to_datetime(df['date'])
+    df['Week_Number'] = df['Date'].dt.isocalendar().week
+    df['Year']=(df['Date'] - df['Date'].dt.weekday * timedelta(days=1)).dt.year
+    df.set_index('Date')
+
+    df = df.groupby(['Year','Week_Number'], as_index=False).sum()
+
+    df['year_week']=df['Year'].astype(str)+'-W'+df['Week_Number'].astype(str)
+    df['year_week2']=df['Year'].astype(int)*100+df['Week_Number'].astype(int)
+    df['date'] = pd.to_datetime(df['year_week2'].astype(str) + '0', format='%Y%W%w') # do not use: last week of the year become weird...
+
+    sub_groups = ['Cases by gender', 'Actual cases',#'Cases (Males)', 'Cases (Females)', #
+                'Admissions by gender', 'Actual admissions',#'Admissions (Males)', 'Admissions (Feales)', #
+                'Deaths by gender', 'Actual deaths',#'Deaths (Males)', 'Deaths (Feales)', #
+                ]
+
+    fig = make_subplots(rows=6, cols=1, 
+        subplot_titles=sub_groups, 
+        shared_xaxes=True,
+        shared_yaxes=True, # use same y axis range
+        vertical_spacing=0.05,
+        horizontal_spacing=0.05,
+        row_width=[0.1, 0.4, 0.1, 0.4, 0.1, 0.4],
+        #
+        # column_width=[0.25, 0.25]
+        )
+
+    
+    fig.add_trace(go.Scatter(fill='tonexty', x=df['date'], y=df['cases_male']/SF_cases,
+                             name="cases Male", 
+                             line=dict(width=1, color='pink')), 
+                row=1, col=1)
+
+    fig.add_trace(go.Scatter(fill='tonexty', x=df['date'], y=df['cases_female']/SF_cases,
+                             name="cases Female", 
+                             line=dict(width=1, color='red')),
+                row=1, col=1)
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vcases']/SF_cases,
+                             name="actual cases", 
+                             line=dict({'width': 1, 'color': 'black', 'dash':'dot'})),
+                #secondary_y=True, 
+                row=2,col=1)
+    # -------------------------------------------------------------------------------------------------------------------
+    fig.add_trace(go.Scatter(fill='tonexty', x=df['date'], y=df['admissions_male']/SF_admissions, 
+                             name="admissions Male", 
+                             line=dict(width=1, color='lightgreen')), 
+                    row=3, col=1)
+
+    fig.add_trace(go.Scatter(fill='tonexty', x=df['date'], y=df['admissions_female']/SF_admissions, 
+                             name="admissions Female", 
+                             line=dict(width=1, color='green')), 
+                    row=3, col=1)
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vadmissions'],
+                             name="actual admissions", 
+                             line=dict({'width': 1, 'color': 'black', 'dash':'dot'})),
+                #secondary_y=True, 
+                row=4,col=1)
+    # -------------------------------------------------------------------------------------------------------------------
+    fig.add_trace(go.Scatter(fill='tonexty', x=df['date'], y=df['deaths_male']/SF_deaths, 
+                             name="deaths Male", 
+                             line=dict(width=1, color='lightgrey')), 
+                    row=5, col=1)
+
+    fig.add_trace(go.Scatter(fill='tonexty', x=df['date'], y=df['deaths_female']/SF_deaths, 
+                             name="deaths Female", 
+                             line=dict(width=1, color='grey')), 
+                    row=5, col=1)
+    fig.add_trace(go.Scatter(mode='lines', x=df['date'], y=df['vdeaths'],
+                             name="actual deaths", 
+                             line=dict({'width': 1, 'color': 'black', 'dash':'dot'})),
                 #secondary_y=True, 
                 row=6,col=1)
     # -------------------------------------------------------------------------------------------------------------------
@@ -828,11 +1089,13 @@ def load_SEIR(mode):
 
         print('All plots-Loading completed!')
         plotdf = pd.concat(dlist, axis=1)
+        plotdf.drop('date', axis=1, inplace=True)
 
         dates = dlist[0]['date'].tolist()
         #####plotdf.drop('date', axis=1, inplace=True)
 
         max = plotdf.groupby(plotdf.columns, axis=1).max()
+        min = plotdf.groupby(plotdf.columns, axis=1).min()
         
         #mean = plotdf.groupby(plotdf.columns, axis=1).mean() # error! return 0s ... use transpose() for fix
         
@@ -840,15 +1103,15 @@ def load_SEIR(mode):
         # df2 = df2.groupby(by=df2.index, axis=0).apply(lambda g: g.mean() if isinstance(g.iloc[0,0], numbers.Number) else g.iloc[0])
         # mean = df2.transpose()
         
-        sum= plotdf.groupby(plotdf.columns, axis=1).sum()
-        mean=sum
-        
-        min = plotdf.groupby(plotdf.columns, axis=1).min()
-        max['date'] = dates
-        mean['date'] = dates
-        min['date'] = dates
+        mean= plotdf.groupby(plotdf.columns, axis=1).sum() # as of 3/31, use sum only
 
-        return plot2(min, mean, max)
+        # max['date'] = dates
+        # min['date'] = dates
+        mean['date'] = dates
+
+        #return plot2(min, mean, max)
+        #return plot3(mean)
+        return plot3_weekly(mean)
     else:
         dlist = []
         for root, dirs, files in os.walk(path):
@@ -869,7 +1132,8 @@ def load_SEIR(mode):
             return plot_age2(plotdf)
         elif mode == 'By Gender':
             #return plot_gender(plotdf)
-            return plot_gender2(plotdf)
+            #return plot_gender2(plotdf)
+            return plot_gender2_weekly(plotdf)
         elif mode == 'By Race':
             #return plot_race(plotdf)
             return plot_race2(plotdf)
