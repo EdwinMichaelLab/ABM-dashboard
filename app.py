@@ -1663,12 +1663,79 @@ def load_scatter_read_parquet(zipcode=default_zipcode, year=default_year, sampli
     pdf['Date']=[startdate+timedelta(days=d) for d in pdf['step']]
     pdf['Date']=pdf['Date'].astype(str)
 
+    '''
+    Weekly stats
+    '''
+    pdf['Date'] = pd.to_datetime(pdf['Date'])
+    pdf['Week_Number'] = pdf['Date'].dt.isocalendar().week
+    pdf['Year']=(pdf['Date'] - pdf['Date'].dt.weekday * timedelta(days=1)).dt.year
+    pdf.set_index('Date')
+
+    pdf = pdf.groupby(['Year','Week_Number'], as_index=False).sum()
+
+    pdf['year_week']=pdf['Year'].astype(str)+'-W'+pdf['Week_Number'].astype(str)
+    pdf['year_week2']=pdf['Year'].astype(int)*100+pdf['Week_Number'].astype(int)
+    pdf['Date'] = pd.to_datetime(pdf['year_week2'].astype(str) + '0', format='%Y%W%w') # do not use: last week of the year become weird...
+
+
     #print('scatter memory usage', pdf.info())
     print('scatter memory size(MB)', sys.getsizeof(pdf)/(1024*1024))
     pdf = pdf.sort_values(by='step') # should be run after sampling
     pdf.drop('step',axis=1, inplace=True)
 
     return draw_scatter(pdf, zipcode, width, height, show_whole_county)
+
+def draw_scatter(pdf, zipcode, width, height, show_whole_county):
+    global scatter_size
+    scatter_size=pdf.size
+    print("scatter_size in draw", scatter_size)
+
+    center_lat = 28.03711
+    center_lon = -82.46390
+    zoom_level=default_zoom
+    if ZIPS_centers[zipcode]:
+        center_lat=ZIPS_centers[zipcode][0]
+        center_lon=ZIPS_centers[zipcode][1]
+        zoom_level=12
+    if show_whole_county:
+        zoom_level=8
+    print("centers", center_lat, center_lon, "zoom", zoom_level)
+    fig = px.scatter_mapbox(pdf,
+                            animation_frame='Date',
+
+                            color='state',
+                            color_discrete_map=legend_map,
+                            lat='y',
+                            lon='x',                            
+                            zoom=zoom_level, #default 8 (0-20)
+                            width=width,
+                            height=height,
+                            center=dict(lat=center_lat, lon=center_lon),
+                            #mapbox_style='open-street-map',
+                            #mapbox_style='carto-darkmatter',
+                            mapbox_style='carto-positron',
+    )
+    fig.update_layout(showlegend=False)
+
+    fig.update_layout(legend=dict(
+        orientation="h",
+        xanchor="right",
+        yanchor="bottom",
+        y=1.02,
+        x=1,        
+        #title_font_family="Times New Roman",
+        font=dict(
+            family="Courier",
+            size=12,
+            color="black"
+        ),
+        bgcolor="LightSteelBlue",
+        bordercolor="Black",
+        borderwidth=2
+        )
+    )
+    return fig
+
 
 """
 load_heatmap using_read_parquet
@@ -1727,69 +1794,6 @@ def load_heatmap_read_parquet(zipcode=default_zipcode, year=default_year, sampli
     pdf.drop('step',axis=1, inplace=True)
 
     return draw_heatmap(pdf, zipcode, width, height, show_whole_county)
-
-def draw_scatter(pdf, zipcode, width, height, show_whole_county):
-    pdf['Date'] = pd.to_datetime(pdf['Date'])
-    pdf['Week_Number'] = pdf['Date'].dt.isocalendar().week
-    pdf['Year']=(pdf['Date'] - pdf['Date'].dt.weekday * timedelta(days=1)).dt.year
-    pdf.set_index('Date')
-
-    pdf = pdf.groupby(['Year','Week_Number'], as_index=False).sum()
-
-    pdf['year_week']=pdf['Year'].astype(str)+'-W'+pdf['Week_Number'].astype(str)
-    pdf['year_week2']=pdf['Year'].astype(int)*100+pdf['Week_Number'].astype(int)
-    pdf['Date'] = pd.to_datetime(pdf['year_week2'].astype(str) + '0', format='%Y%W%w') # do not use: last week of the year become weird...
-
-    global scatter_size
-    scatter_size=pdf.size
-    print("scatter_size in draw", scatter_size)
-
-    center_lat = 28.03711
-    center_lon = -82.46390
-    zoom_level=default_zoom
-    if ZIPS_centers[zipcode]:
-        center_lat=ZIPS_centers[zipcode][0]
-        center_lon=ZIPS_centers[zipcode][1]
-        zoom_level=12
-    if show_whole_county:
-        zoom_level=8
-    print("centers", center_lat, center_lon, "zoom", zoom_level)
-    fig = px.scatter_mapbox(pdf,
-                            animation_frame='Date',
-
-                            color='state',
-                            color_discrete_map=legend_map,
-                            lat='y',
-                            lon='x',                            
-                            zoom=zoom_level, #default 8 (0-20)
-                            width=width,
-                            height=height,
-                            center=dict(lat=center_lat, lon=center_lon),
-                            #mapbox_style='open-street-map',
-                            #mapbox_style='carto-darkmatter',
-                            mapbox_style='carto-positron',
-    )
-    fig.update_layout(showlegend=False)
-
-    fig.update_layout(legend=dict(
-        orientation="h",
-        xanchor="right",
-        yanchor="bottom",
-        y=1.02,
-        x=1,        
-        #title_font_family="Times New Roman",
-        font=dict(
-            family="Courier",
-            size=12,
-            color="black"
-        ),
-        bgcolor="LightSteelBlue",
-        bordercolor="Black",
-        borderwidth=2
-        )
-    )
-    return fig
-
 
 def draw_heatmap(pdf, zipcode, width, height, show_whole_county):
     global heatmap_size
