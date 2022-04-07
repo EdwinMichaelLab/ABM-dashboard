@@ -520,8 +520,8 @@ def plot3_weekly(min, mean, max):
 
     days_interval=10
     mean['cases']=calc_N_day_average(mean['cases'], days_interval)
-    #mean['admissions']=calc_N_day_average(mean['admissions'], days_interval)
-    mean['admissions']=upper_envelope(mean['admissions'], days_interval)
+    mean['admissions']=calc_N_day_average(mean['admissions'], days_interval)
+    #mean['admissions']=upper_envelope(mean['admissions'], days_interval)
     mean['deaths']=calc_N_day_average(mean['deaths'], days_interval)
 
     # Create figure
@@ -602,7 +602,7 @@ def plot3_weekly(min, mean, max):
     #             row=4, col=1)
     # for splitt pop and shakir logic
     SF_cases=50
-    SF_admissions=50
+    SF_admissions=60
     SF_deaths=1
 
     # SF_cases=0.1
@@ -2093,18 +2093,23 @@ def draw_risky_zipcodes():
     #                         )
     riskzips_df2=pd.read_parquet("../risky_zipcodes2.parquet")
     riskzips_df2['date_str']=riskzips_df2['date'].dt.strftime('%Y-%m-%d')
-    fig = px.choropleth_mapbox(riskzips_df2, geojson=dfm2, locations='zipcode', color='risk', featureidkey="properties.zipcode",
+    fig = px.choropleth_mapbox(riskzips_df2, 
+                            geojson=dfm2, locations='zipcode', 
+                            color='risk', 
+                            featureidkey="properties.zipcode",
                             color_continuous_scale="Viridis_r",
                             #range_color=(0, 12),
                             #mapbox_style="carto-positron",
                             #mapbox_style='white-bg',
                             mapbox_style="open-street-map",
-                            zoom=9, center = {"lat": 27.91, "lon": -82.4},
+                            zoom=8, center = {"lat": 27.91, "lon": -82.4},
                             opacity=0.5,
                             #labels={'zip_area':'random'}
                             #animation_frame='step',
                             #animation_frame='year_week2',
                             animation_frame='date_str',
+                            width=graph_width,
+                            height=graph_height
                             )     
     fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
     return fig
@@ -2181,16 +2186,16 @@ app.layout = html.Div(children=[
                     html.H4("Choose Scenarios:", className="control_label", style={'padding': 10, 'flex': 1}),
                     dcc.RadioItems(
                         id="intervention",
-                        options=[{'label': i, 'value': i} for i in ['No intervention',
-                                                                    'More interventions',
-                                                                    'Less interventions']
+                        options=[{'label': i, 'value': i} for i in ['No change',
+                                                                    'Social distancing (+25%)',
+                                                                    'Social distancing (-25%)']
                         ],
                         value="No intervention",
                         labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
                         #labelStyle = {'display': 'inline-block', 'margin-right': 10},
                         style={'padding': 10, 'flex': 1}
                     ),
-                    html.P("Interventions: Lockdown(+-25%), Vaccination(+-10%)"),
+                    #html.P("Interventions: Lockdown(+-25%), Vaccination(+-10%)"),
                     html.Br(),
                     html.Br(),
                     html.A("Contact Info.", href='https://health.usf.edu/publichealth/overviewcoph/faculty/edwin-michael', target="_blank"),
@@ -2214,9 +2219,10 @@ app.layout = html.Div(children=[
                             dcc.Tabs(id="tabsgraph", value='moretab', children=[
                                 dcc.Tab(label='About E.D.E.N.', value='moretab', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='Time Plots', value='tab1', style = tab_style, selected_style = tab_selected_style),
+                                dcc.Tab(label='All zip codes plots', value='tab1_1', style = tab_style, selected_style = tab_selected_style),
+                                dcc.Tab(label='Bubble Map of infections', value='tab3', style = tab_style, selected_style = tab_selected_style),
+                                dcc.Tab(label='Risk by zip codes', value='tab5', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='Spatial Spread', value='tab2', style = tab_style, selected_style = tab_selected_style),
-                                dcc.Tab(label='Bubble Map', value='tab3', style = tab_style, selected_style = tab_selected_style),
-                                dcc.Tab(label='Weekly Risky areas', value='tab5', style = tab_style, selected_style = tab_selected_style),
                                 #dcc.Tab(label='Spatial Spread & Heatmap (Hillsborough County)', value='tab4', style = tab_style, selected_style = tab_selected_style),
                             ], style = tabs_styles),
                             html.Div(
@@ -2311,6 +2317,18 @@ def render_content(tab):
                 }
             )
         ])
+    elif tab == 'tab1_1':
+        return html.Div([
+            html.Br(),
+            html.H2("Cases (all zip codes)"),
+            html.Img(src=app.get_asset_url('cases-allzip.png'), style={'margin-left': 10, 'width':'800px'}),            
+            html.Br(),
+            html.H2("Admissions (all zip codes)"),
+            html.Img(src=app.get_asset_url('admissions-allzip.png'), style={'margin-left': 10, 'width':'800px'}),            
+            html.Br(),
+            html.H2("Deaths (all zip codes)"),
+            html.Img(src=app.get_asset_url('deaths-allzip.png'), style={'margin-left': 10, 'width':'800px'}),            
+        ])
     elif tab == 'tab2':
         fig=load_scatter(zipcode_for_all, year_for_all, sampling_for_all, graph_width, graph_height, show_whole_county=False)
         return html.Div(id="tab2", children=[
@@ -2375,53 +2393,54 @@ def render_content(tab):
                         "overflow": "hidden"
                 }
             ),
-            html.Div(children=[
-                html.A("More info of ZIP="+zipcode_for_all, href='https://www.unitedstateszipcodes.org/'+zipcode_for_all+'/', target="_blank"),
-            ]),
+            # html.Div(children=[
+            #     html.A("More info of ZIP="+zipcode_for_all, href='https://www.unitedstateszipcodes.org/'+zipcode_for_all+'/', target="_blank"),
+            # ]),
 
-        ])
+        ])        
     elif tab == 'tab3':
         fig=load_heatmap(zipcode_for_all, year_for_all, sampling_for_all, graph_width, graph_height, show_whole_county=False)
         return html.Div(id="tab3", children=[
             html.Br(),
-            html.H2("Heatmap of the density of daily infectious cases"),
+            html.H2("Bubble Map of Weekly infections in zip codes"),
+            # html.H2("Heatmap of the density of daily infectious cases"),
             #html.P("(Z values represents the number of cases within the same zipcode area.)"),
             #html.P("(Steps equals Days starting March 1, 2020)"),
-            html.P(heat_map_explain),
-            html.Div(children=[
-                html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
-                dcc.Dropdown(
-                    id="year_heatmap",
-                    options=[{'label': i, 'value': i} for i in ['2020','2021']],
-                    #value=default_year,
-                    value=year_for_all,
-                   style={'width':'100px', 'display':'inline-block', 'verticalAlign':'middle'}
-                ),
-                html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
-                dcc.Dropdown(
-                    id="zipcode_heatmap",
-                    options=[{'label': i, 'value': i} for i in ZIPS],
-                    #value=default_zipcode,
-                    value=zipcode_for_all,
-                    style={'width':'120px', 'display':'inline-block', 'verticalAlign':'middle'}
-                ),
-                html.H4("Sampling rate: ", className="control_label", style={'display': 'inline-block'}),
-                dcc.Dropdown(
-                    id="sampling_heatmap",
-                    options=[{'label': '10 %', 'value':0.1},
-                            {'label': '25 %', 'value':0.25},
-                            {'label': '50 %', 'value': 0.5},
-                            {'label': '75 %', 'value':0.75},
-                            {'label': "100 %", 'value':1.0}],
-                    #value=0.25,
-                    value=sampling_for_all,
-                    style={'width':'100px', 'display':'inline-block', 'verticalAlign':'middle'}
-                ),
-            ], style={'width': '100%', 'display': 'inline-block'}),
-            #html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_2*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
-            html.Div(id="heatmap_size_num", children=[
-                html.P("(Data size="+str(heatmap_size)+"), Sampling rate="+str(sampling_for_all), style={'textAlign': 'center', 'color':'orange'}),
-            ]),
+            # html.P(heat_map_explain),
+            # html.Div(children=[
+            #     html.H4("Year:", className="control_label", style={'display': 'inline-block'}),
+            #     dcc.Dropdown(
+            #         id="year_heatmap",
+            #         options=[{'label': i, 'value': i} for i in ['2020','2021']],
+            #         #value=default_year,
+            #         value=year_for_all,
+            #        style={'width':'100px', 'display':'inline-block', 'verticalAlign':'middle'}
+            #     ),
+            #     html.H4(", Zip Code: ", className="control_label", style={'display': 'inline-block'}),
+            #     dcc.Dropdown(
+            #         id="zipcode_heatmap",
+            #         options=[{'label': i, 'value': i} for i in ZIPS],
+            #         #value=default_zipcode,
+            #         value=zipcode_for_all,
+            #         style={'width':'120px', 'display':'inline-block', 'verticalAlign':'middle'}
+            #     ),
+            #     html.H4("Sampling rate: ", className="control_label", style={'display': 'inline-block'}),
+            #     dcc.Dropdown(
+            #         id="sampling_heatmap",
+            #         options=[{'label': '10 %', 'value':0.1},
+            #                 {'label': '25 %', 'value':0.25},
+            #                 {'label': '50 %', 'value': 0.5},
+            #                 {'label': '75 %', 'value':0.75},
+            #                 {'label': "100 %", 'value':1.0}],
+            #         #value=0.25,
+            #         value=sampling_for_all,
+            #         style={'width':'100px', 'display':'inline-block', 'verticalAlign':'middle'}
+            #     ),
+            # ], style={'width': '100%', 'display': 'inline-block'}),
+            # #html.P("Note: For the fast web response, only a fraction of data is being used here. This page uses "+str(SAMPLING_PERCENT_2*100)+" %", style={'textAlign': 'center', 'color':'orange'}),
+            # html.Div(id="heatmap_size_num", children=[
+            #     html.P("(Data size="+str(heatmap_size)+"), Sampling rate="+str(sampling_for_all), style={'textAlign': 'center', 'color':'orange'}),
+            # ]),
             html.Div(children=[
                     dcc.Graph(
                         id="graph3",
@@ -2445,9 +2464,9 @@ def render_content(tab):
                         "overflow": "hidden"
                 }
             ),
-            html.Div(children=[
-                html.A("More info of ZIP="+zipcode_for_all, href='https://www.unitedstateszipcodes.org/'+zipcode_for_all+'/', target="_blank"),
-            ]),
+            # html.Div(children=[
+            #     html.A("More info of ZIP="+zipcode_for_all, href='https://www.unitedstateszipcodes.org/'+zipcode_for_all+'/', target="_blank"),
+            # ]),
 
         ])
     elif tab == 'tab4':
@@ -2501,7 +2520,7 @@ def render_content(tab):
         fig=draw_risky_zipcodes()
         return  html.Div(children=[
                     html.Br(),
-                    html.H2("Risky zipcodes"),
+                    html.H2("Risk by zip codes"),
                     html.Div(
                         dcc.Graph(
                             id='graph5',
