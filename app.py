@@ -70,7 +70,51 @@ ZIPS = ['33510', '33511', '33527', '33534', '33547', '33548', '33549', '33556', 
             '33614', '33615', '33616', '33617', '33618', '33619', '33624', '33625', '33626', '33629', '33634', '33635',
             '33637', '33647',
             '33620', '33503']
-
+colors_list=[
+"aliceblue", "antiquewhite", "aqua", "aquamarine", "azure",
+                "beige", "bisque", "black", "blanchedalmond", "blue",
+                "blueviolet", "brown", "burlywood", "cadetblue",
+                "chartreuse", "chocolate", "coral", "cornflowerblue",
+                "cornsilk", "crimson", "cyan", "darkblue", "darkcyan",
+                "darkgoldenrod", "darkgray", "darkgrey", "darkgreen",
+                "darkkhaki", "darkmagenta", "darkolivegreen", "darkorange",
+                "darkorchid", "darkred", "darksalmon", "darkseagreen",
+                "darkslateblue", "darkslategray", "darkslategrey",
+                "darkturquoise", "darkviolet", "deeppink", "deepskyblue",
+                "dimgray", "dimgrey", "dodgerblue", "firebrick",
+                "floralwhite", "forestgreen", "fuchsia", 
+                #"gainsboro",
+                #"ghostwhite", "gold", "goldenrod", 
+                #"gray", "grey", 
+                #"green",
+                #"greenyellow", "honeydew", "hotpink", "indianred", 
+                #"indigo",
+                #"ivory", "khaki", "lavender", "lavenderblush", 
+                #"lawngreen",
+                #"lemonchiffon", 
+                "lightblue", "lightcoral", "lightcyan",
+                "lightgoldenrodyellow", "lightgray", "lightgrey",
+                "lightgreen", "lightpink", "lightsalmon", "lightseagreen",
+                "lightskyblue", "lightslategray", "lightslategrey",
+                "lightsteelblue", "lightyellow", "lime", "limegreen",
+                "linen", "magenta", "maroon", "mediumaquamarine",
+                "mediumblue", "mediumorchid", "mediumpurple",
+                "mediumseagreen", "mediumslateblue", "mediumspringgreen",
+                "mediumturquoise", "mediumvioletred", "midnightblue",
+                "mintcream", "mistyrose", "moccasin", "navajowhite", "navy",
+                "oldlace", "olive", "olivedrab", "orange", "orangered",
+                "orchid", "palegoldenrod", "palegreen", "paleturquoise",
+                "palevioletred", "papayawhip", "peachpuff", "peru", "pink",
+                "plum", "powderblue", "purple", "red", "rosybrown",
+                "royalblue", "saddlebrown", "salmon", "sandybrown",
+                "seagreen", "seashell", "sienna", "silver", "skyblue",
+                "slateblue", "slategray", "slategrey", "snow", "springgreen",
+                "steelblue", "tan", "teal", "thistle", "tomato", "turquoise",
+                "violet", "wheat", 
+                #"white", 
+                "whitesmoke", "yellow",
+                "yellowgreen"
+]
 ZIPS_centers={ '33510':[27.96, -82.30], 
                 '33511':[27.90, -82.30],
                 '33527':[27.97, -82.22],
@@ -343,6 +387,86 @@ def upper_envelope(df, windowsize=20):
 
 #     #fig.show()
 #     return fig
+
+def load_allzipcodes():
+    dlist = []
+    for root, dirs, files in os.walk(path):
+        #print(root)
+        #print(dirs)
+        #print(files)
+        for file in files:
+            if file.startswith("plot_"):
+                zip = file.split('_')[1]
+                zip = zip.replace('.csv', '')
+                if zip in ZIPS:
+                    fpath=os.path.join(root,file)
+                    d = pd.read_csv(fpath)
+                    d['zipcode']=zip
+                    dlist.append(d)
+    df2 = pd.concat(dlist)
+    df2.drop('date', axis=1, inplace=True)
+    dates = dlist[0]['date'].tolist()
+    del dlist # free up memory
+
+    allcases=pd.DataFrame(columns=ZIPS)
+    alladmissions=pd.DataFrame(columns=ZIPS)
+    alldeaths=pd.DataFrame(columns=ZIPS)
+    allcases['date']=dates
+    alladmissions['date']=dates
+    alldeaths['date']=dates
+    days_interval=10
+    # remove not-simulated zips
+    ZIPS.remove('33503')
+    ZIPS.remove('33620')
+    for zip in ZIPS:
+        allcases[zip]=calc_N_day_average(df2[df2['zipcode']==zip]['cases'].to_frame(), days_interval)
+        alladmissions[zip]=calc_N_day_average(df2[df2['zipcode']==zip]['admissions'].to_frame(), days_interval)
+        alldeaths[zip]=calc_N_day_average(df2[df2['zipcode']==zip]['deaths'].to_frame(), days_interval)
+
+    # fig_cases= go.Figure()
+    # fig_admissions= go.Figure()
+    # fig_deaths= go.Figure()
+    # for zip in ZIPS:
+    #     fig_cases.add_trace(go.Scatter(x=allcases['date'], y=allcases[zip],
+    #         mode='lines', name=zip
+    #     ))
+    #     fig_admissions.add_trace(go.Scatter(x=alladmissions['date'], y=alladmissions[zip],
+    #         mode='lines', name=zip
+    #     ))
+    #     fig_deaths.add_trace(go.Scatter(x=alldeaths['date'], y=alldeaths[zip],
+    #         mode='lines', name=zip
+    #     ))
+    # return fig_cases, fig_admissions, fig_deaths
+
+    sub_groups = ['Cases (All zip codes)', 
+                'Admissions (All zip codes)', 
+                'Deaths (All zip codes)', ]
+
+    fig_subplots = make_subplots(rows=3, cols=1, 
+        subplot_titles=sub_groups, 
+        shared_xaxes=True, 
+        shared_yaxes=True,
+        vertical_spacing = 0.08,
+        row_width=[0.1, 0.1, 0.1])
+    for zip in ZIPS:
+        c=colors_list[ZIPS.index(zip)]
+
+        fig_subplots.add_trace(go.Scatter(x=allcases['date'], y=allcases[zip],
+            mode='lines', name=zip, text=zip, line_shape='spline',line=dict(color=c),
+        ),row=1, col=1)
+        fig_subplots.add_trace(go.Scatter(x=alladmissions['date'], y=alladmissions[zip],
+            mode='lines', name=zip, text=zip, line_shape='spline',showlegend=False,line=dict(color=c),
+        ),row=2, col=1)
+        fig_subplots.add_trace(go.Scatter(x=alldeaths['date'], y=alldeaths[zip],
+            mode='lines', name=zip, text=zip, line_shape='spline',showlegend=False,line=dict(color=c),
+        ),row=3, col=1)
+    fig_subplots.update_xaxes(showline=True, linewidth=1, linecolor='black', mirror=True, ticklabelmode="period", dtick="M1")
+    fig_subplots.update_yaxes(showline=True, linewidth=1, linecolor='black', mirror=True)
+    fig_subplots.update_layout(showlegend=True, autosize=True,
+                    #width=900, height=800,
+                    #legend=dict(orientation="h",x=0, y=-0.1, traceorder="normal"),
+                    font=dict(family="Arial", size=11))
+    return fig_subplots
 
 def plot3(min, mean, max):
     # Create figure
@@ -1716,8 +1840,6 @@ def load_SEIR(mode):
                     #print(file)
                     no = file.split('_')[1].split('.')[0]
                     d = pd.read_csv(os.path.join(root, file))
-                    # d['chunk'] = no
-                    #if get_RMSE(no, d['vcases'], d['cases']) < 400:
                     dlist.append(d)
 
         print('All plots-Loading completed!')
@@ -2075,22 +2197,6 @@ def draw_legend_table():
 def draw_risky_zipcodes():
     dfm2=gpd.read_file("hillsborough-zipcodes-boundarymap.geojson")
 
-    # riskzips_df=pd.read_parquet("../risky_zipcodes.parquet")
-    # fig = px.choropleth_mapbox(riskzips_df, 
-    #                         geojson=dfm2, 
-    #                         locations='zipcode', 
-    #                         color='risk', 
-    #                         featureidkey="properties.zipcode",
-    #                         color_continuous_scale="Viridis_r",
-    #                         #range_color=(0, 12),
-    #                         #mapbox_style="carto-positron",
-    #                         #mapbox_style='white-bg',
-    #                         mapbox_style="open-street-map",
-    #                         zoom=9, center = {"lat": 27.91, "lon": -82.4},
-    #                         opacity=0.5,
-    #                         #labels={'zip_area':'random'}
-    #                         animation_frame='step',
-    #                         )
     riskzips_df2=pd.read_parquet("../risky_zipcodes2.parquet")
     riskzips_df2['date_str']=riskzips_df2['date'].dt.strftime('%Y-%m-%d')
     fig = px.choropleth_mapbox(riskzips_df2, 
@@ -2173,9 +2279,6 @@ app.layout = html.Div(children=[
             ),
             html.Div(
                 style={
-                        #'backgroundColor':'darkslategray',
-                        #'color':'lightsteelblue',
-                        #'height':'100px',
                         'margin-left':'10px',
                         'width':'20%',
                         'text-align':'center',
@@ -2183,12 +2286,24 @@ app.layout = html.Div(children=[
                         },
                 className="nav",
                 children=[
-                    html.H4("Choose Scenarios:", className="control_label", style={'padding': 10, 'flex': 1}),
+                    html.H4("Options for social distancing:", className="control_label", style={'padding': 10, 'flex': 1}),
                     dcc.RadioItems(
-                        id="intervention",
-                        options=[{'label': i, 'value': i} for i in ['No change',
+                        id="social_distaincing",
+                        options=[{'label': i, 'value': i} for i in ['No change in social distancing',
                                                                     'Social distancing (+25%)',
                                                                     'Social distancing (-25%)']
+                        ],
+                        value="No change",
+                        labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
+                        #labelStyle = {'display': 'inline-block', 'margin-right': 10},
+                        style={'padding': 10, 'flex': 1}
+                    ),
+                    html.H4("Vaccination scenarios:", className="control_label", style={'padding': 10, 'flex': 1}),
+                    dcc.RadioItems(
+                        id="vaccination",
+                        options=[{'label': i, 'value': i} for i in ['No change in vaccination',
+                                                                    'Vaccination (+5%)',
+                                                                    'Vaccination (-5%)']
                         ],
                         value="No intervention",
                         labelStyle={'display': 'block', 'text-align': 'left', 'margin-right': 20},
@@ -2206,9 +2321,6 @@ app.layout = html.Div(children=[
             ),
             html.Div(
                 style={
-                        #'backgroundColor':'darkslategray',
-                        #'color':'lightsteelblue',
-                        #'height':'100px',
                         'margin-left':'10px',
                         'width':'70%',
                         'text-align':'center',
@@ -2318,16 +2430,39 @@ def render_content(tab):
             )
         ])
     elif tab == 'tab1_1':
+        #fig_cases, fig_admissions, fig_deaths=load_allzipcodes()
+        fig=load_allzipcodes()
         return html.Div([
             html.Br(),
-            html.H2("Cases (all zip codes)"),
-            html.Img(src=app.get_asset_url('cases-allzip.png'), style={'margin-left': 10, 'width':'600px'}),            
+            html.H2("All zip codes"),
+            #html.Img(src=app.get_asset_url('cases-allzip.png'), style={'margin-left': 10, 'width':'600px'}),
+            html.Div(children=[
+                dcc.Graph(
+                    id='graph11',
+                    #figure=figure1,
+                    figure=fig,
+                    config={
+                        'displayModeBar': False
+                    },
+                    responsive=True,
+                    style={
+                        "width": "100%",
+                        "height": "100%",
+                    }
+                )],
+                style={
+                        "width": "900px",
+                        "height": "900px",
+                        "display": "inline-block",
+                        "overflow": "hidden"
+                }
+            ),
             html.Br(),
-            html.H2("Admissions (all zip codes)"),
-            html.Img(src=app.get_asset_url('admissions-allzip.png'), style={'margin-left': 10, 'width':'600px'}),            
-            html.Br(),
-            html.H2("Deaths (all zip codes)"),
-            html.Img(src=app.get_asset_url('deaths-allzip.png'), style={'margin-left': 10, 'width':'600px'}),            
+            # html.H2("Admissions (all zip codes)"),
+            # html.Img(src=app.get_asset_url('admissions-allzip.png'), style={'margin-left': 10, 'width':'600px'}),            
+            # html.Br(),
+            # html.H2("Deaths (all zip codes)"),
+            # html.Img(src=app.get_asset_url('deaths-allzip.png'), style={'margin-left': 10, 'width':'600px'}),            
         ])
     elif tab == 'tab2':
         fig=load_scatter(zipcode_for_all, year_for_all, sampling_for_all, graph_width, graph_height, show_whole_county=False)
