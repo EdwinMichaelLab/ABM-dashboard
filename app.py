@@ -2321,13 +2321,13 @@ def render_content(tab):
         return html.Div([
             html.Br(),
             html.H2("Cases (all zip codes)"),
-            html.Img(src=app.get_asset_url('cases-allzip.png'), style={'margin-left': 10, 'width':'800px'}),            
+            html.Img(src=app.get_asset_url('cases-allzip.png'), style={'margin-left': 10, 'width':'600px'}),            
             html.Br(),
             html.H2("Admissions (all zip codes)"),
-            html.Img(src=app.get_asset_url('admissions-allzip.png'), style={'margin-left': 10, 'width':'800px'}),            
+            html.Img(src=app.get_asset_url('admissions-allzip.png'), style={'margin-left': 10, 'width':'600px'}),            
             html.Br(),
             html.H2("Deaths (all zip codes)"),
-            html.Img(src=app.get_asset_url('deaths-allzip.png'), style={'margin-left': 10, 'width':'800px'}),            
+            html.Img(src=app.get_asset_url('deaths-allzip.png'), style={'margin-left': 10, 'width':'600px'}),            
         ])
     elif tab == 'tab2':
         fig=load_scatter(zipcode_for_all, year_for_all, sampling_for_all, graph_width, graph_height, show_whole_county=False)
