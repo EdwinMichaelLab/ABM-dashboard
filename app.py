@@ -257,6 +257,21 @@ fillcolor3='rgb(127, 166, 238)'
 fillcolor4='rgb(131, 90, 241)'
 fillcolor5='rgb(141, 80, 251)'
 
+
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+app = dash.Dash(__name__, title="COVID-19 Dashboard powered by EDEN (USF-COPH-Dr.Edwin Michael Lab)")
+#    external_stylesheets=external_stylesheets)
+
+#app.config.suppress_callback_exceptions = True
+app.prevent_initial_callbacks=True
+
+cache = Cache(app.server, config={
+    'CACHE_TYPE': 'redis', # need local redis server installation using docker(windows) or apt install(linux-ubuntu)
+    'CACHE_REDIS_URL': 'redis://localhost:6379'
+})
+
+CACHE_TIMEOUT=24*60*60
+
 def get_RMSE(zip, actual, simulated):
     mse = mean_squared_error(actual, simulated)
     rmse = math.sqrt(mse)
@@ -2180,6 +2195,8 @@ def draw_heatmap_bubble(width, height):
     # Create the figure and feed it all the prepared columns
     fig = px.scatter_mapbox(riskzips_df2, lat="y", lon="x", color="risk", size=riskzips_df2['risk'],
                     animation_frame = 'date_str',
+                    width=width, height=height,
+                    hover_data=['date_str', 'zipcode','risk'],
                     color_continuous_scale=px.colors.cyclical.IceFire, size_max=50, zoom=9)
     return fig
 
@@ -2198,7 +2215,8 @@ def draw_legend_table():
                     html.Td("☻ presymptomatic", style={"color":"#F2D7D5"}), 
                     html.Td("☻ severe", style={"color":"#EC7063"})]),
             ], style={"border-style": "ridge", "text-align": "left", 'marginLeft': 'auto', 'marginRight': 'auto'})
-
+            
+@cache.memoize(timeout=CACHE_TIMEOUT)
 def draw_risky_zipcodes():
     dfm2=gpd.read_file("hillsborough-zipcodes-boundarymap.geojson")
 
@@ -2206,6 +2224,7 @@ def draw_risky_zipcodes():
     riskzips_df2['date_str']=riskzips_df2['date'].dt.strftime('%Y-%m-%d')
     fig = px.choropleth_mapbox(riskzips_df2, 
                             geojson=dfm2, locations='zipcode', 
+                            hover_data=['date_str', 'zipcode','risk'],
                             color='risk', 
                             featureidkey="properties.zipcode",
                             color_continuous_scale="Viridis_r",
@@ -2256,20 +2275,6 @@ tab_selected_style = {
     'padding': '6px',
     'border-radius': '15px',
 }
-
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-app = dash.Dash(__name__, title="COVID-19 Dashboard powered by EDEN (USF-COPH-Dr.Edwin Michael Lab)")
-#    external_stylesheets=external_stylesheets)
-
-#app.config.suppress_callback_exceptions = True
-app.prevent_initial_callbacks=True
-
-cache = Cache(app.server, config={
-    'CACHE_TYPE': 'redis', # need local redis server installation using docker(windows) or apt install(linux-ubuntu)
-    'CACHE_REDIS_URL': 'redis://localhost:6379'
-})
-
-CACHE_TIMEOUT=24*60*60
 
 app.layout = html.Div(children=[
     html.Div(
@@ -2340,7 +2345,7 @@ app.layout = html.Div(children=[
                                 dcc.Tab(label='Bubble Map of infections', value='tab3', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='Risk by zip codes', value='tab5', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='Spatial Spread', value='tab2', style = tab_style, selected_style = tab_selected_style),
-                                #dcc.Tab(label='Spatial Spread & Heatmap (Hillsborough County)', value='tab4', style = tab_style, selected_style = tab_selected_style),
+                                dcc.Tab(label='Spatial Spread & Bubble Map (Hillsborough county)', value='tab4', style = tab_style, selected_style = tab_selected_style),
                             ], style = tabs_styles),
                             html.Div(
                                 id='tabs-contentgraph'),
@@ -2631,6 +2636,7 @@ def render_content(tab):
                     options=[{'label': '1 %', 'value':0.01},
                             {'label': '5 %', 'value':0.05},
                             {'label': '10 %', 'value': 0.1},
+                            {'label': '25 %', 'value': 0.25},
                     ],
                     value=0.01,
                     style={'width':'100px', 'display':'inline-block', 'verticalAlign':'middle'}
