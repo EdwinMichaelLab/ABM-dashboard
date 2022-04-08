@@ -203,6 +203,8 @@ print(path)
 startdate = date(2020, 3, 1)
 enddate = date(2022, 1, 31)
 
+period_explain="(Period: March 1, 2020 ~ January 31, 2022)"
+
 default_zipcode ="33510"
 default_year ="2021"
 default_sampling=0.25
@@ -265,7 +267,8 @@ def calc_7_day_average(df):
     return df.rolling(window=7).mean()
 
 def calc_N_day_average(df, ndays=7):
-    return df.rolling(window=ndays).mean()
+    #return df.rolling(window=ndays).mean()
+    return df.rolling(window=ndays).mean().fillna(0).round().astype(int) # return whole number
 
 def calc_mean(df):
     df=df.transpose()
@@ -414,7 +417,9 @@ def load_allzipcodes():
     allcases['date']=dates
     alladmissions['date']=dates
     alldeaths['date']=dates
+
     days_interval=10
+
     # remove not-simulated zips
     ZIPS.remove('33503')
     ZIPS.remove('33620')
@@ -438,9 +443,9 @@ def load_allzipcodes():
     #     ))
     # return fig_cases, fig_admissions, fig_deaths
 
-    sub_groups = ['Cases (All zip codes)', 
-                'Admissions (All zip codes)', 
-                'Deaths (All zip codes)', ]
+    sub_groups = ['Cases_'+str(days_interval)+'-day average', 
+                'Admissions_'+str(days_interval)+'-day average', 
+                'Deaths_'+str(days_interval)+'-day average', ]
 
     fig_subplots = make_subplots(rows=3, cols=1, 
         subplot_titles=sub_groups, 
@@ -642,18 +647,18 @@ def plot3_weekly(min, mean, max):
     #mean['vadmissions']=upper_envelope(mean['vadmissions'], days_interval)
     mean['vdeaths']=calc_N_day_average(mean['vdeaths'], days_interval)
 
-    days_interval=10
-    mean['cases']=calc_N_day_average(mean['cases'], days_interval)
-    mean['admissions']=calc_N_day_average(mean['admissions'], days_interval)
+    days_interval2=10
+    mean['cases']=calc_N_day_average(mean['cases'], days_interval2)
+    mean['admissions']=calc_N_day_average(mean['admissions'], days_interval2)
     #mean['admissions']=upper_envelope(mean['admissions'], days_interval)
-    mean['deaths']=calc_N_day_average(mean['deaths'], days_interval)
+    mean['deaths']=calc_N_day_average(mean['deaths'], days_interval2)
 
     # Create figure
     fig = go.Figure()
 
-    sub_groups = ['Cases', #'Actual cases', 
-                'Admissions', #'Actual admissions', 
-                'Deaths', #'Actual deaths'
+    sub_groups = ['Cases (Weekly and Smoothed)', #'Actual cases', 
+                'Admissions (Weekly and Smoothed)', #'Actual admissions', 
+                'Deaths (Weekly and Smoothed)', #'Actual deaths'
                 #'(Accumulated) Deaths', #'Actual deaths'
                 ]
     fig = make_subplots(rows=3, cols=1, 
@@ -2331,7 +2336,7 @@ app.layout = html.Div(children=[
                             dcc.Tabs(id="tabsgraph", value='moretab', children=[
                                 dcc.Tab(label='About E.D.E.N.', value='moretab', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='Time Plots', value='tab1', style = tab_style, selected_style = tab_selected_style),
-                                dcc.Tab(label='All zip codes plots', value='tab1_1', style = tab_style, selected_style = tab_selected_style),
+                                dcc.Tab(label='Zip Codes Time Plots', value='tab1_1', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='Bubble Map of infections', value='tab3', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='Risk by zip codes', value='tab5', style = tab_style, selected_style = tab_selected_style),
                                 dcc.Tab(label='Spatial Spread', value='tab2', style = tab_style, selected_style = tab_selected_style),
@@ -2394,7 +2399,8 @@ def render_content(tab):
     elif tab == 'tab1':
         return html.Div([
             html.Br(),
-            html.P(time_plots_explain),
+            #html.P(time_plots_explain),
+            html.P(period_explain),
             html.H4("Time Plots Filters:", className="control_label", style={'padding': 10, 'flex': 1}),
             dcc.RadioItems(
                 id="filter_type",
@@ -2407,6 +2413,7 @@ def render_content(tab):
                 value="All cases",
                 labelStyle={'display': 'inline-block'}
             ),
+            html.P("* Use Range slider(in the bottom) to select the range."),
             html.Div(children=[
                 dcc.Graph(
                     id='graph1',
@@ -2434,7 +2441,7 @@ def render_content(tab):
         fig=load_allzipcodes()
         return html.Div([
             html.Br(),
-            html.H2("All zip codes"),
+            html.H2("Zip codes Time plots"),
             #html.Img(src=app.get_asset_url('cases-allzip.png'), style={'margin-left': 10, 'width':'600px'}),
             html.Div(children=[
                 dcc.Graph(
@@ -2538,6 +2545,7 @@ def render_content(tab):
         return html.Div(id="tab3", children=[
             html.Br(),
             html.H2("Bubble Map of Weekly infections in zip codes"),
+            html.P(period_explain),
             # html.H2("Heatmap of the density of daily infectious cases"),
             #html.P("(Z values represents the number of cases within the same zipcode area.)"),
             #html.P("(Steps equals Days starting March 1, 2020)"),
@@ -2655,7 +2663,8 @@ def render_content(tab):
         fig=draw_risky_zipcodes()
         return  html.Div(children=[
                     html.Br(),
-                    html.H2("Risk by zip codes"),
+                    html.H2("Risk by zip codes (Weekly)"),
+                    html.P(period_explain),
                     html.Div(
                         dcc.Graph(
                             id='graph5',
